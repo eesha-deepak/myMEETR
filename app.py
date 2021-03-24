@@ -8,7 +8,7 @@ import re
 
 app = Flask(__name__)
 app.secret_key = "super secret key"
-app.config ['SQLALCHEMY_DATABASE_URI'] = 'mysql://root:123456@35.232.209.150/mydb'
+app.config ['SQLALCHEMY_DATABASE_URI'] = 'mysql://root:password@ipaddress/dbname'
 
 db = SQLAlchemy(app)
 class person(db.Model):
