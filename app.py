@@ -25,19 +25,8 @@ class person(db.Model):
         self.time_zone_name = time_zone_name
         self.email = email
 
-@app.route("/", methods = ['GET', 'POST'])
+@app.route("/")
 def home():
-    if request.method == 'POST':
-        if not request.form['first_name'] or not request.form['last_name'] or not request.form['time_zone_name'] or not request.form['email']:
-            flash('Please enter all the fields', 'error')
-        else:
-            pers = person(23, request.form['first_name'], request.form['last_name'], request.form['time_zone_name'], request.form['email'])
-         
-            db.session.add(pers)
-            db.session.commit()
-         
-            flash('Record was successfully added')
-            #return redirect(url_for('show_all'))
     return render_template('home.html')
 
 if __name__ == '__main__':
@@ -45,13 +34,24 @@ if __name__ == '__main__':
    db.create_all()
    app.run(debug = True)
 
-@app.route("/about/")
-def about():
-    return render_template("about.html")
+@app.route("/attendee/", methods = ['GET', 'POST'])
+def attendee():
+    if request.method == 'POST':
+        if not request.form['first_name'] or not request.form['last_name'] or not request.form['time_zone_name'] or not request.form['email']:
+            flash('Please enter all the fields', 'error')
+        else:
+            pers = person(25, request.form['first_name'], request.form['last_name'], request.form['time_zone_name'], request.form['email'])
+        
+            db.session.add(pers)
+            db.session.commit()
+         
+            flash('Record was successfully added')
+            #return redirect(url_for('show_all'))
+    return render_template("attendee.html")
 
-@app.route("/contact/")
-def contact():
-    return render_template("contact.html")
+@app.route("/ranking/")
+def ranking():
+    return render_template("ranking.html", person = person.query.all())
 
 @app.route("/hello/")
 @app.route("/hello/<name>")

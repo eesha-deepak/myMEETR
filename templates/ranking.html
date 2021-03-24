@@ -1,0 +1,29 @@
+{% extends "layout.html" %}
+{% block title %}
+contact us
+{% endblock %}
+{% block content %}
+
+    <table>
+        <thead>
+        <tr>
+            <th>First Name</th>
+            <th>Last Name</th>
+            <th>Email</th>
+            <th>Time Zone</th>
+        </tr>
+        </thead>
+        
+        <tbody>
+        {% for pers in person %}
+            <tr>
+                <td>{{ pers.first_name }}</td>
+                <td>{{ pers.last_name }}</td>
+                <td>{{ pers.email }}</td>
+                <td>{{ pers.time_zone_name }}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+      
+{% endblock %}
