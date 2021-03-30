@@ -8,7 +8,7 @@ import re
 
 app = Flask(__name__)
 app.secret_key = "super secret key"
-app.config ['SQLALCHEMY_DATABASE_URI'] = 'mysql://root:password@ipaddress/dbname'
+app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///database.db'
 
 db = SQLAlchemy(app)
 class person(db.Model):
@@ -40,7 +40,7 @@ def attendee():
         if not request.form['first_name'] or not request.form['last_name'] or not request.form['time_zone_name'] or not request.form['email']:
             flash('Please enter all the fields', 'error')
         else:
-            pers = person(25, request.form['first_name'], request.form['last_name'], request.form['time_zone_name'], request.form['email'])
+            pers = person(27, request.form['first_name'], request.form['last_name'], request.form['time_zone_name'], request.form['email'])
         
             db.session.add(pers)
             db.session.commit()
