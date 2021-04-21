@@ -59,7 +59,6 @@ def attendee():
 def ranking():
     cnx = mysql.connector.connect(user="", password="", host="", database="")
     cursor = cnx.cursor()
-
     try:
         query = """
                 select date, start_time, end_time, count(person_id) as people_available 
