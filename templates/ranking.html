@@ -1,29 +1,54 @@
 {% extends "layout.html" %}
 {% block title %}
-contact us
+myMEETR
 {% endblock %}
 {% block content %}
+<h2>Ranking by Time</h2>
+<style>
+    table, th, td {
+      border: 1px solid black;
+      border-collapse: collapse;
+    }
+    th, td {
+      padding: 15px;
+    }
+</style>
+<table style="width:100%">
+    <tr>
+      <th>Date</th>
+      <th>Start Time</th> 
+      <th>End Time</th>
+      <th>Time Zone</th>
+      <th>Number of Available People</th>
+    </tr>
+    {% for item in data %}
+    <tr>
+        <td>{{item[0]}}</td>
+        <td>{{item[1]}}</td>
+        <td>{{item[2]}}</td>
+        <td>UTC</td>
+        <td>{{item[3]}}</td>
+    </tr>
+    {% endfor %}
+  </table>
 
-    <table>
-        <thead>
-        <tr>
-            <th>First Name</th>
-            <th>Last Name</th>
-            <th>Email</th>
-            <th>Time Zone</th>
-        </tr>
-        </thead>
-        
-        <tbody>
-        {% for pers in person %}
-            <tr>
-                <td>{{ pers.first_name }}</td>
-                <td>{{ pers.last_name }}</td>
-                <td>{{ pers.email }}</td>
-                <td>{{ pers.time_zone_name }}</td>
-            </tr>
-        {% endfor %}
-        </tbody>
-    </table>
-      
+<h2>Ranking by Importance</h2>
+<table style="width:100%">
+    <tr>
+      <th>Date</th>
+      <th>Start Time</th> 
+      <th>End Time</th>
+      <th>Time Zone</th>
+      <th>Number of Available People</th>
+    </tr>
+    {% for item in data2 %}
+    <tr>
+        <td>{{item[7]}}</td>
+        <td>{{item[8]}}</td>
+        <td>{{item[9]}}</td>
+        <td>UTC</td>
+        <td>{{item[6]}}</td>
+    </tr>
+    {% endfor %}
+</table>
 {% endblock %}
