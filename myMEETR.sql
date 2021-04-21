@@ -7,7 +7,7 @@ DROP TABLE IF EXISTS attendee_info;
 DROP TABLE IF EXISTS importance;
 
 CREATE TABLE IF NOT EXISTS `person` (
-  `person_id` int(11) NOT NULL,
+  `person_id` int(11) NOT NULL AUTO_INCREMENT,
   `first_name` varchar(50) NOT NULL,
   `last_name` varchar(50) NOT NULL,
   `time_zone_name` varchar(50) NOT NULL,
