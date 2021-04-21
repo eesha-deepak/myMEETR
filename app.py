@@ -14,6 +14,8 @@ app.config ['SQLALCHEMY_DATABASE_URI'] = 'mysql://username:password@localhost/db
 # localhost is ip address (of instance)
 # db_name is db name (db3 for example)
 
+meeting_number_ranking = 1
+
 db = SQLAlchemy(app)
 class person(db.Model):
     id = db.Column('person_id', db.Integer, primary_key = True)
@@ -55,7 +57,56 @@ def attendee():
 
 @app.route("/ranking/")
 def ranking():
-    return render_template("ranking.html", person = person.query.all())
+    cnx = mysql.connector.connect(user="", password="", host="", database="")
+    cursor = cnx.cursor()
+
+    try:
+        query = """
+                select date, start_time, end_time, count(person_id) as people_available 
+                from 
+                    (select link_meeting.availability_id, person.person_id, date, start_time, end_time from availability_info, person, link_meeting where link_meeting.person_id = person.person_id and link_meeting.availability_id = availability_info.availability_id and link_meeting.meeting_id = '{}') 
+                    as table_times 
+                group by availability_id 
+                order by people_available desc;""".format(meeting_number_ranking)
+        cursor.execute(query)
+    except mysql.connector.Error as err:
+        print(err)
+    
+    data = cursor.fetchall()
+    cursor.close()
+    cnx.close()
+
+    cnx2 = mysql.connector.connect(user="", password="", host="", database="")
+    cursor2 = cnx2.cursor()
+    try:
+        query2 = """
+            select availability_id, level_1, level_2, level_3, level_4, level_5, (level_1 + level_2 + level_3 + level_4 + level_5) as total, date, start_time, end_time
+
+            from 
+                (select availability_id, sum(importance_level = 1) as level_1, sum(importance_level = 2) as level_2, sum(importance_level = 3) as level_3, sum(importance_level = 4) as level_4, sum(importance_level = 5) as level_5, date, start_time, end_time
+                from 
+                    (select link_meeting.meeting_id, link_meeting.availability_id, person.person_id, importance.importance_level, date, start_time, end_time
+
+                    from availability_info, person, link_meeting, importance, attendee_info
+
+                    where link_meeting.person_id = person.person_id 
+                    and link_meeting.availability_id = availability_info.availability_id 
+                    and link_meeting.person_id = attendee_info.person_id 
+                    and attendee_info.meeting_id = link_meeting.meeting_id 
+                    and link_meeting.meeting_id = '{}'
+                    and importance.meeting_role = attendee_info.meeting_role) as tables
+
+                group by availability_id
+                order by level_1 desc, level_2 desc, level_3 desc, level_4 desc, level_5 desc) as level_times;""".format(meeting_number_ranking)
+        cursor2.execute(query2)
+    except mysql.connector.Error as err:
+        print(err)
+    
+    data2 = cursor2.fetchall()
+    cursor2.close()
+    cnx2.close()
+
+    return render_template('ranking.html', data=data, data2=data2)
 
 @app.route("/hello/")
 @app.route("/hello/<name>")
