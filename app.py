@@ -184,7 +184,7 @@ def ranking():
                     (select link_meeting.availability_id, person.person_id, date, start_time, end_time from availability_info, person, link_meeting where link_meeting.person_id = person.person_id and link_meeting.availability_id = availability_info.availability_id and link_meeting.meeting_id = '{}') 
                     as table_times 
                 group by availability_id 
-                order by people_available desc;""".format(meeting_number_ranking)
+                order by people_available desc;""".format(meeting_id_ranking)
         cursor.execute(query)
     except mysql.connector.Error as err:
         print(err)
@@ -214,7 +214,7 @@ def ranking():
                     and importance.meeting_role = attendee_info.meeting_role) as tables
 
                 group by availability_id
-                order by level_1 desc, level_2 desc, level_3 desc, level_4 desc, level_5 desc) as level_times;""".format(meeting_number_ranking)
+                order by level_1 desc, level_2 desc, level_3 desc, level_4 desc, level_5 desc) as level_times;""".format(meeting_id_ranking)
         cursor2.execute(query2)
     except mysql.connector.Error as err:
         print(err)
