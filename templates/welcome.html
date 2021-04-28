@@ -1,0 +1,27 @@
+{% extends "layout.html" %}
+{% block title %}
+myMEETR
+{% endblock %}
+{% block content %}
+<p>Welcome<p>
+<p>If you are a Meeting Creater enter your email<p>
+<p>If you are an Attendee enter the meeting id and your email<p>
+<form action = "{{ request.path }}" method = "post">
+    <label>Meeting Creator: </label><br>
+    <label for = "M_email">Email</label>
+    <input type = "text" name = "M_email"/><br>
+    <br>
+    <label>Attendee: </label><br>
+    <label for = "meeting_id">Meeting ID</label>
+    <input type = "text" name = "meeting_id"/><br>
+    <label for = "A_email">Email</label>
+    <input type = "text" name = "A_email"/><br>
+    <br>
+    <label>Get Rankings for Meeting </label><br>
+    <label for = "R_meeting_id">Meeting ID</label>
+    <input type = "text" name = "R_meeting_id"/><br>
+    <input type = "submit" value = "Submit" />
+    {% for message in get_flashed_messages() %}
+        <p>{{ message }}</p>
+    {% endfor %}
+{% endblock %}
