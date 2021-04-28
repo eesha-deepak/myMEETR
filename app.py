@@ -13,8 +13,7 @@ import sqlalchemy
 
 app = Flask(__name__)
 app.secret_key = "super secret key"
-app.config ['SQLALCHEMY_DATABASE_URI'] = 'mysql://root:12345@34.94.231.54/db1'
-# username is root
+app.config ['SQLALCHEMY_DATABASE_URI'] = 'mysql://root:pwd@localhost/db_name'
 # password is database pwd
 # localhost is ip address (of instance)
 # db_name is db name (db3 for example)
@@ -91,7 +90,7 @@ def home():
             mexists = db.session.query(db.exists().where(meeting_details.meeting_id == meeting_id)).scalar()
 
             #cursor for checking if meeting_id for attendee exists
-            cnx = mysql.connector.connect(user="root", password="12345", host="34.94.231.54", database="db1")
+            cnx = mysql.connector.connect(user="root", password="", host="", database="")
             cursor = cnx.cursor()
             try:
                 query = "select * from link_meeting lm join person p on lm.person_id = p.person_id where (lm.meeting_id = "+meeting_id+") and (p.email = '"+A_email+"');"
@@ -196,7 +195,7 @@ def availability():
 
 @app.route("/ranking/")
 def ranking():
-    cnx = mysql.connector.connect(user="root", password="12345", host="34.94.231.54", database="db1")
+    cnx = mysql.connector.connect(user="root", password="", host="", database="")
     cursor = cnx.cursor(prepared=True)
     try:
         query = """
@@ -214,7 +213,7 @@ def ranking():
     cursor.close()
     cnx.close()
 
-    cnx2 = mysql.connector.connect(user="root", password="12345", host="34.94.231.54", database="db1")
+    cnx2 = mysql.connector.connect(user="root", password="", host="", database="")
     cursor2 = cnx2.cursor(prepared=True)
     try:
         query2 = """
