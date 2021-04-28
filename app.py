@@ -18,7 +18,8 @@ app.config ['SQLALCHEMY_DATABASE_URI'] = 'mysql://username:password@localhost/db
 # localhost is ip address (of instance)
 # db_name is db name (db3 for example)
 
-meeting_number_ranking = 1
+meeting_id_ranking = 1
+meeting_id_attendee = 1
 
 db = SQLAlchemy(app)
 class person(db.Model):
@@ -66,9 +67,11 @@ def home():
     if request.method == 'POST':
         #get welcome page variables
         meeting_id = request.form['meeting_id']
+        meeting_id_attendee = meeting_id
         A_email = request.form['A_email']
         M_email = request.form['M_email']
         R_meeting_id = request.form['R_meeting_id']
+        meeting_id_ranking = R_meeting_id
 
         #attendee details entered
         if meeting_id and A_email and not M_email and not R_meeting_id:
