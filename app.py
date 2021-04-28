@@ -190,13 +190,8 @@ def availability():
         if not request.form['start_time'] or not request.form['end_time'] or not request.form['importance_name'] or not request.form['date']:
             flash('Please enter all the fields', 'error')
         else:
-            #pers = person(request.form['start_time'], request.form['last_name'], request.form['time_zone_name'], request.form['email'])
-        
-            #db.session.add(pers)
-            #db.session.commit()
+            # do all my checky checks
          
-            flash('Record was successfully added')
-            #return redirect(url_for('show_all'))
     return render_template("availability.html", implevels = importance.query.all())
 
 @app.route("/ranking/")
