@@ -4,14 +4,8 @@ from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 from flask import request
 from flask import flash
-<<<<<<< HEAD
-<<<<<<< HEAD
 from flask import redirect, render_template, url_for
-=======
->>>>>>> 304ac83 (prev iteration)
-=======
 from flask import redirect, render_template, url_for
->>>>>>> 5b19a80 (committing)
 import mysql.connector
 import re
 import sqlalchemy
@@ -19,7 +13,7 @@ import sqlalchemy
 
 app = Flask(__name__)
 app.secret_key = "super secret key"
-app.config ['SQLALCHEMY_DATABASE_URI'] = 'mysql://username:password@localhost/db_name'
+app.config ['SQLALCHEMY_DATABASE_URI'] = 'mysql://root:12345@34.94.231.54/db1'
 # username is root
 # password is database pwd
 # localhost is ip address (of instance)
@@ -50,6 +44,13 @@ class time_zone(db.Model):
         self.tname = tname
         self.offset = offset
 
+class importance(db.Model):
+    role = db.Column('meeting_role', db.String(50), primary_key = True)
+    importance_level = db.Column(db.Integer)
+
+    def __init__(self, iname, offset):
+        self.role = role
+        self.importance_level = importance_level
 
 class link_meeting(db.Model):
     availability_id = db.Column('availability_id', db.Integer, primary_key = True)
@@ -90,7 +91,7 @@ def home():
             mexists = db.session.query(db.exists().where(meeting_details.meeting_id == meeting_id)).scalar()
 
             #cursor for checking if meeting_id for attendee exists
-            cnx = mysql.connector.connect(user="", password="", host="", database="")
+            cnx = mysql.connector.connect(user="root", password="12345", host="34.94.231.54", database="db1")
             cursor = cnx.cursor()
             try:
                 query = "select * from link_meeting lm join person p on lm.person_id = p.person_id where (lm.meeting_id = "+meeting_id+") and (p.email = '"+A_email+"');"
@@ -111,9 +112,12 @@ def home():
                 return redirect(url_for('newAttendee'))
 
             #meeting exists for attendee = redirect to attendee page
-            if (check>0):
-                flash('redirect to attendee page')
-                #return redirect(url_for('ATTENDEE PAGE'))
+            #if (check>0):
+                #flash('redirect to attendee page')
+                #return redirect(url_for('availability'))
+            # both meeting id and person exist
+            if(mexists and pexists):
+                return redirect(url_for('availability'))
 
             #meeting_id and/or attendee was entered incorrectly
             else:
@@ -180,19 +184,34 @@ def newAttendee():
             #return redirect(url_for('show_all'))
     return render_template("newAttendee.html", tzones = time_zone.query.all())
 
+@app.route("/availability/", methods = ['GET', 'POST'])
+def availability():
+    if request.method == 'POST':
+        if not request.form['start_time'] or not request.form['end_time'] or not request.form['importance_name'] or not request.form['date']:
+            flash('Please enter all the fields', 'error')
+        else:
+            #pers = person(request.form['start_time'], request.form['last_name'], request.form['time_zone_name'], request.form['email'])
+        
+            #db.session.add(pers)
+            #db.session.commit()
+         
+            flash('Record was successfully added')
+            #return redirect(url_for('show_all'))
+    return render_template("availability.html", implevels = importance.query.all())
+
 @app.route("/ranking/")
 def ranking():
-    cnx = mysql.connector.connect(user="", password="", host="", database="")
-    cursor = cnx.cursor()
+    cnx = mysql.connector.connect(user="root", password="12345", host="34.94.231.54", database="db1")
+    cursor = cnx.cursor(prepared=True)
     try:
         query = """
                 select date, start_time, end_time, count(person_id) as people_available 
                 from 
-                    (select link_meeting.availability_id, person.person_id, date, start_time, end_time from availability_info, person, link_meeting where link_meeting.person_id = person.person_id and link_meeting.availability_id = availability_info.availability_id and link_meeting.meeting_id = '{}') 
+                    (select link_meeting.availability_id, person.person_id, date, start_time, end_time from availability_info, person, link_meeting where link_meeting.person_id = person.person_id and link_meeting.availability_id = availability_info.availability_id and link_meeting.meeting_id = %s) 
                     as table_times 
                 group by availability_id 
-                order by people_available desc;""".format(meeting_id_ranking)
-        cursor.execute(query)
+                order by people_available desc;"""
+        cursor.execute(query, (meeting_id_ranking, ))
     except mysql.connector.Error as err:
         print(err)
     
@@ -200,8 +219,8 @@ def ranking():
     cursor.close()
     cnx.close()
 
-    cnx2 = mysql.connector.connect(user="", password="", host="", database="")
-    cursor2 = cnx2.cursor()
+    cnx2 = mysql.connector.connect(user="root", password="12345", host="34.94.231.54", database="db1")
+    cursor2 = cnx2.cursor(prepared=True)
     try:
         query2 = """
             select availability_id, level_1, level_2, level_3, level_4, level_5, (level_1 + level_2 + level_3 + level_4 + level_5) as total, date, start_time, end_time
@@ -214,11 +233,11 @@ def ranking():
                     and link_meeting.availability_id = availability_info.availability_id 
                     and link_meeting.person_id = attendee_info.person_id 
                     and attendee_info.meeting_id = link_meeting.meeting_id 
-                    and link_meeting.meeting_id = '{}'
+                    and link_meeting.meeting_id = %s
                     and importance.meeting_role = attendee_info.meeting_role) as tables
                 group by availability_id
-                order by level_1 desc, level_2 desc, level_3 desc, level_4 desc, level_5 desc) as level_times;""".format(meeting_id_ranking)
-        cursor2.execute(query2)
+                order by level_1 desc, level_2 desc, level_3 desc, level_4 desc, level_5 desc) as level_times;"""
+        cursor2.execute(query2, (meeting_id_ranking, ))
     except mysql.connector.Error as err:
         print(err)
     
