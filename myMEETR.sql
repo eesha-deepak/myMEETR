@@ -146,10 +146,10 @@ INSERT INTO `link_meeting` (`availability_id`, `person_id`, `meeting_id`) VALUES
 --
 
 CREATE TABLE IF NOT EXISTS `availability_info` (
-	`availability_id` int(11) NOT NULL,
-  `date` date NOT NULL,
-  `start_time` time NOT NULL,
-  `end_time` time NOT NULL,
+	`availability_id` int(11) NOT NULL AUTO_INCREMENT,
+  `date` varchar(50) NOT NULL,
+  `start_time` varchar(50) NOT NULL,
+  `end_time` varchar(50) NOT NULL,
   PRIMARY KEY (`availability_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
@@ -158,11 +158,11 @@ CREATE TABLE IF NOT EXISTS `availability_info` (
 --
 
 INSERT INTO `availability_info` (`availability_id`, `date`, `start_time`, `end_time`) VALUES
-(1, '2021-04-20', '08:00:00', '10:00:00'),
-(2, '2021-04-20', '07:00:00', '09:00:00'),
-(3, '2021-04-22', '07:00:00', '09:00:00'),
-(4, '2021-03-24', '07:00:00', '09:30:00'),
-(5, '2021-03-24', '07:30:00', '10:00:00');
+(1, '2021-04-20', '8:00:00', '10:00:00'),
+(2, '2021-04-20', '7:00:00', '9:00:00'),
+(3, '2021-04-22', '7:00:00', '9:00:00'),
+(4, '2021-03-24', '7:00:00', '9:30:00'),
+(5, '2021-03-24', '7:30:00', '10:00:00');
 
 -- --------------------------------------------------------
 
