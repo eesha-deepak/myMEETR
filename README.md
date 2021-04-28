@@ -4,4 +4,5 @@ A web application that helps companies to organize meeting times, according to c
 Note: If mySQLDB's module does not work for your system, copy paste the following lines into env/lib/python3.9/site-packages/click/init.py
 
 import pymysql
+
 pymysql.install_as_MySQLdb()
