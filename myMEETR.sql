@@ -25,21 +25,7 @@ INSERT INTO `person` (`person_id`, `first_name`, `last_name`, `time_zone_name`, 
 (3, 'Xavier', 'Cunningham', 'JST', 'xcunningham@purdue.edu'),
 (4, 'Bernard', 'Stevenson', 'IST', 'bstevenson@purdue.edu'),
 (5, 'Jolie', 'Baker', 'CDT', 'jbaker@purdue.edu'),
-(6, 'Christie', 'Tate', 'CST', 'ctate@purdue.edu'),
-(7, 'Raveena', 'Gupta', 'PDT', 'rgupta@purdue.edu'),
-(8, 'Koa', 'Kahele', 'HST', 'kkahele@purdue.edu'),
-(9, 'Lucy', 'Winters', 'GMT', 'lwinters@purdue.edu'),
-(10, 'Aditya', 'Kapoor', 'IST', 'akapoor@purdue.edu'),
-(11, 'Emily', 'Huang', 'CST', 'ehuang@purdue.edu'),
-(12, 'Dana', 'Darsh', 'IRDT', 'ddarsh@purdue.edu'),
-(13, 'Jessica', 'Brown', 'AEDT', 'jbrown@purdue.edu'),
-(14, 'Neha', 'Patel', 'NPT', 'npatel@purdue.edu'),
-(15, 'Igor', 'Karkaroff', 'MSK', 'ikarkaroff@purdue.edu'),
-(16, 'Carlos', 'Santos', 'GST', 'csantos@purdue.edu'),
-(17, 'Aryan', 'Abbasi', 'UZT', 'aabbasi@purdue.edu'),
-(18, 'Ark', 'Macintosh', 'HDT', 'amacintosh@purdue.edu'),
-(19, 'Felicity', 'Weathers', 'EDT', 'fweathers@purdue.edu'),
-(20, 'Oliver', 'Stone', 'EDT', 'ostone@purdue.edu');
+(6, 'Christie', 'Tate', 'CST', 'ctate@purdue.edu');
 
 -- --------------------------------------------------------
 
@@ -119,13 +105,10 @@ CREATE TABLE IF NOT EXISTS `meeting_details` (
 --
 
 INSERT INTO `meeting_details` (`meeting_id`, `in_person`, `online`, `start_day`, `end_day`, `length_hr`, `description`, `creator_id`) VALUES
-(1, 0, 1, '2021-04-20', '2021-04-25', 2, "Pitching project", 2),
+(1, 0, 1, '2021-04-20', '2021-04-25', 2, "Pitching project", 1),
 (2, 0, 1, '2021-03-24', '2021-03-25', 2.5, "Progress update", 5),
 (3, 0, 1, '2021-04-04', '2021-04-15', 3, "Demo project", 6),
-(4, 1, 0, '2021-04-10', '2021-04-13', 1, "", 6),
-(5, 1, 0, '2021-04-12', '2021-04-16', 0.5, "Sprint review", 12),
-(6, 1, 0, '2021-04-14', '2021-04-15', 2, "Assign tasks and explain proj", 13),
-(7, 1, 0, '2021-04-23', '2021-04-23', 4, "Create presention", 18);
+(4, 1, 0, '2021-04-10', '2021-04-13', 1, "", 6);
 
 -- --------------------------------------------------------
 
@@ -146,10 +129,15 @@ CREATE TABLE IF NOT EXISTS `link_meeting` (
 INSERT INTO `link_meeting` (`availability_id`, `person_id`, `meeting_id`) VALUES
 (1, 1, 1),
 (2, 1, 1),
-(2, 2, 1),
-(3, 2, 1),
-(4, 14, 2),
-(5, 15, 2);
+(3, 1, 1),
+(1, 2, 1),
+(1, 3, 1),
+(2, 4, 1),
+(4, 4, 2),
+(5, 4, 2),
+(5, 5, 2),
+(5, 6, 2),
+(6, 6, 2);
 
 -- --------------------------------------------------------
 
@@ -193,26 +181,13 @@ CREATE TABLE IF NOT EXISTS `attendee_info` (
 --
 
 INSERT INTO `attendee_info` (`person_id`, `meeting_id`, `meeting_role`) VALUES
-(1, 4, 'Coordinator'),
-(2, 2, 'Presenter'),
-(3, 7, 'Coordinator'),
-(4, 7, 'Guest Speaker'),
-(5, 1, 'Attendee'),
-(6, 3, 'Presenter'),
-(7, 2,'Attendee'),
-(8, 6, 'Attendee'),
-(9, 1, 'Coordinator'),
-(10, 3, 'Coordinator'),
-(11, 7, 'Attendee'),
-(12, 5, 'Recorder'),
-(13, 1, 'Attendee'),
-(14, 4, 'Attendee'),
-(15, 6, 'Coordinator'),
-(16, 1, 'Attendee'),
-(17, 6, 'Presenter'),
-(18, 2, 'Coordinator'),
-(19, 5,'Coordinator'),
-(20, 2, 'Guest Speaker');
+(1, 1, 'Coordinator'),
+(2, 1, 'Guest Speaker'),
+(3, 1, 'Recorder'),
+(4, 1, 'Presenter'),
+(5, 2, 'Coordinator'),
+(6, 2, 'Attendee'),
+(4, 2, 'Presenter');
 
 -- --------------------------------------------------------
 
