@@ -4,7 +4,11 @@ from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 from flask import request
 from flask import flash
+from flask import redirect, render_template, url_for
+import mysql.connector
 import re
+import sqlalchemy
+
 
 app = Flask(__name__)
 app.secret_key = "super secret key"
@@ -38,9 +42,111 @@ class time_zone(db.Model):
         self.tname = tname
         self.offset = offset
 
-@app.route("/")
+
+class link_meeting(db.Model):
+    availability_id = db.Column('availability_id', db.Integer, primary_key = True)
+    meeting_id = db.Column('meeting_id', db.Integer, primary_key = True)
+    person_id = db.Column('person_id', db.Integer, primary_key = True)
+
+    def __init__(self, tname, offset):
+        self.availability_id = availability_id
+        self.meeting_id = meeting_id
+        self.person_id = person_id
+
+class meeting_details(db.Model):
+    meeting_id = db.Column('meeting_id', db.Integer, primary_key = True)
+
+
+    def __init__(self, tname, offset):
+        self.meeting_id = ameeting_id
+
+
+@app.route("/", methods = ['GET', 'POST'])
 def home():
-    return render_template('home.html')
+    if request.method == 'POST':
+        #get welcome page variables
+        meeting_id = request.form['meeting_id']
+        A_email = request.form['A_email']
+        M_email = request.form['M_email']
+        R_meeting_id = request.form['R_meeting_id']
+
+        #attendee details entered
+        if meeting_id and A_email and not M_email and not R_meeting_id:
+            #check if attendee email exists
+            pexists = db.session.query(db.exists().where(person.email == A_email)).scalar()
+            #check if attendee meeting_id exists
+            mexists = db.session.query(db.exists().where(meeting_details.meeting_id == meeting_id)).scalar()
+
+            #cursor for checking if meeting_id for attendee exists
+            cnx = mysql.connector.connect(user="", password="", host="", database="")
+            cursor = cnx.cursor()
+            try:
+                query = "select * from link_meeting lm join person p on lm.person_id = p.person_id where (lm.meeting_id = "+meeting_id+") and (p.email = '"+A_email+"');"
+                cursor.execute(query)
+            except mysql.connector.Error as err:
+                print(err)
+    
+            result = cursor.fetchall()
+            cursor.close()
+            cnx.close()
+
+            check = 0
+            for row in result:
+                check = check + 1
+
+            #meeting_id exists and attendee does not exist = redirect to newAttendee page
+            if(mexists and not pexists):
+                return redirect(url_for('newAttendee'))
+
+            #meeting exists for attendee = redirect to attendee page
+            if (check>0):
+                flash('redirect to attendee page')
+                #return redirect(url_for('ATTENDEE PAGE'))
+
+            #meeting_id and/or attendee was entered incorrectly
+            else:
+                flash("either meeting_id or email was entered incorrectly")
+                return render_template('welcome.html')
+        
+        #creator details entered
+        if not meeting_id and not A_email and not R_meeting_id and M_email:
+            #check if meeting_id exists
+            mexists = db.session.query(db.exists().where(meeting_details.meeting_id == meeting_id)).scalar()
+
+            #if meeting_id exists = redirect to creator enter meeting details page
+            if mexists:
+                flash('redirect to creator dashboard page')
+                #return redirect(url_for('CREATE MEETING'))
+            
+            #if meeting_id does not exist = redirect to new creator page
+            else:
+                flash('redirect to new creator page')
+                #return redirect(url_for('NEW CREATOR PAGE'))
+
+        #if get ranking details filled
+        if not meeting_id and not A_email and not M_email and R_meeting_id:
+            #check in meeting_id exists
+            mexists = db.session.query(db.exists().where(meeting_details.meeting_id == R_meeting_id)).scalar()
+
+            #if meeting_id exists = redirect to ranking page
+            if mexists:
+                return redirect(url_for('ranking'))
+
+            #if meeting_id does not exists = error
+            else:
+                flash('incorrect meeting id for  ranking')
+                return render_template('welcome.html')
+        
+        #all the fields were empty
+        elif not meeting_id and not A_email and not M_email:
+            flash('nothing was entered, all fields are blank')
+            return render_template('welcome.html')
+        
+        #lol in case some happens eekie
+        else:
+            return render_template('welcome.html')
+    else: 
+        return render_template('welcome.html')
 
 if __name__ == '__main__':
     #To create/use the database mentioned in the URI
