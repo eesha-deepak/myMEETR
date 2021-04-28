@@ -4,7 +4,10 @@ from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 from flask import request
 from flask import flash
+<<<<<<< HEAD
 from flask import redirect, render_template, url_for
+=======
+>>>>>>> 304ac83 (prev iteration)
 import mysql.connector
 import re
 import sqlalchemy
@@ -12,7 +15,7 @@ import sqlalchemy
 
 app = Flask(__name__)
 app.secret_key = "super secret key"
-app.config ['SQLALCHEMY_DATABASE_URI'] = 'mysql://username:password@localhost/db_name'
+app.config ['SQLALCHEMY_DATABASE_URI'] = 'mysql://root:12345@35.235.85.63/db1'
 # username is root
 # password is database pwd
 # localhost is ip address (of instance)
@@ -175,7 +178,7 @@ def newAttendee():
 
 @app.route("/ranking/")
 def ranking():
-    cnx = mysql.connector.connect(user="", password="", host="", database="")
+    cnx = mysql.connector.connect(user="root", password="12345", host="35.235.85.63", database="db1")
     cursor = cnx.cursor()
     try:
         query = """
@@ -193,7 +196,7 @@ def ranking():
     cursor.close()
     cnx.close()
 
-    cnx2 = mysql.connector.connect(user="", password="", host="", database="")
+    cnx2 = mysql.connector.connect(user="root", password="12345", host="35.235.85.63", database="db1")
     cursor2 = cnx2.cursor()
     try:
         query2 = """
