@@ -1,0 +1,23 @@
+{% extends "layout.html" %}
+{% block title %}
+myMEETR
+{% endblock %}
+{% block content %}
+<p>Availability</p>
+<form action = "{{ request.path }}" method = "post">
+    <label for = "start_time">Start Time (army time)</label>
+    <input type = "text" name = "start_time"/><br>
+    <label for = "end_time">End Time (army time)</label>
+    <input type = "text" name = "end_time"/><br>
+    <label for = "date">Date (year-month-date)</label>
+    <input type = "text" name = "date"/><br>
+    <label for="importance_name">Meeting Role</label>
+    <select name="importance_name">
+        {% for impl in implevels %}
+            <option value="{{ impl.role }}">{{ impl.role }}</option>
+        {% endfor %}
+    </select>
+    <br>
+    <input type = "submit" value = "Submit" />
+
+{% endblock %}
