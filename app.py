@@ -68,8 +68,10 @@ def home():
         #get welcome page variables
         meeting_id = request.form['meeting_id']
         meeting_id_attendee = meeting_id
+
         A_email = request.form['A_email']
         M_email = request.form['M_email']
+        
         R_meeting_id = request.form['R_meeting_id']
         meeting_id_ranking = R_meeting_id
 
