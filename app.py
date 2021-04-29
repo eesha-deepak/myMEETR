@@ -13,7 +13,7 @@ import sqlalchemy
 
 app = Flask(__name__)
 app.secret_key = "super secret key"
-app.config ['SQLALCHEMY_DATABASE_URI'] = 'mysql://root:pwd@localhost/db_name'
+app.config ['SQLALCHEMY_DATABASE_URI'] = 'mysql://root:12345@34.94.231.54/db1'
 # password is database pwd
 # localhost is ip address (of instance)
 # db_name is db name (db3 for example)
@@ -90,7 +90,7 @@ def home():
             mexists = db.session.query(db.exists().where(meeting_details.meeting_id == meeting_id)).scalar()
 
             #cursor for checking if meeting_id for attendee exists
-            cnx = mysql.connector.connect(user="root", password="", host="", database="")
+            cnx = mysql.connector.connect(user="root", password="12345", host="34.94.231.54", database="db1")
             cursor = cnx.cursor()
             try:
                 query = "select * from link_meeting lm join person p on lm.person_id = p.person_id where (lm.meeting_id = "+meeting_id+") and (p.email = '"+A_email+"');"
@@ -186,16 +186,18 @@ def newAttendee():
 @app.route("/availability/", methods = ['GET', 'POST'])
 def availability():
     if request.method == 'POST':
-        if not request.form['start_time'] or not request.form['end_time'] or not request.form['importance_name'] or not request.form['date']:
+        if not request.form['start_time'] or not request.form['end_time'] or not request.form['importance_name'] or not request.form['year'] or not request.form['month'] or not request.form['date']:
             flash('Please enter all the fields', 'error')
         else:
             # do all my checky checks
+            stime = request.form['start_time']
+            etime = request.form['end_time'] 
          
     return render_template("availability.html", implevels = importance.query.all())
 
 @app.route("/ranking/")
 def ranking():
-    cnx = mysql.connector.connect(user="root", password="", host="", database="")
+    cnx = mysql.connector.connect(user="root", password="12345", host="34.94.231.54", database="db1")
     cursor = cnx.cursor(prepared=True)
     try:
         query = """
@@ -213,7 +215,7 @@ def ranking():
     cursor.close()
     cnx.close()
 
-    cnx2 = mysql.connector.connect(user="root", password="", host="", database="")
+    cnx2 = mysql.connector.connect(user="root", password="12345", host="34.94.231.54", database="db1")
     cursor2 = cnx2.cursor(prepared=True)
     try:
         query2 = """
