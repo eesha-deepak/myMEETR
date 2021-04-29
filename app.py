@@ -78,7 +78,7 @@ def home():
 
         A_email = request.form['A_email']
         M_email = request.form['M_email']
-        
+
         R_meeting_id = request.form['R_meeting_id']
         meeting_id_ranking = R_meeting_id
 
@@ -89,33 +89,12 @@ def home():
             #check if attendee meeting_id exists
             mexists = db.session.query(db.exists().where(meeting_details.meeting_id == meeting_id)).scalar()
 
-            #cursor for checking if meeting_id for attendee exists
-            cnx = mysql.connector.connect(user="root", password="12345", host="34.94.231.54", database="db1")
-            cursor = cnx.cursor()
-            try:
-                query = "select * from link_meeting lm join person p on lm.person_id = p.person_id where (lm.meeting_id = "+meeting_id+") and (p.email = '"+A_email+"');"
-                cursor.execute(query)
-            except mysql.connector.Error as err:
-                print(err)
-    
-            result = cursor.fetchall()
-            cursor.close()
-            cnx.close()
-
-            check = 0
-            for row in result:
-                check = check + 1
-
             #meeting_id exists and attendee does not exist = redirect to newAttendee page
             if(mexists and not pexists):
                 return redirect(url_for('newAttendee'))
 
             #meeting exists for attendee = redirect to attendee page
-            #if (check>0):
-                #flash('redirect to attendee page')
-                #return redirect(url_for('availability'))
-            # both meeting id and person exist
-            if(mexists and pexists):
+            if (mexists and pexists):
                 return redirect(url_for('availability'))
 
             #meeting_id and/or attendee was entered incorrectly
