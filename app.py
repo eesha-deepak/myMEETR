@@ -4,6 +4,7 @@ from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 from flask import request
 from flask import flash
+import mysql.connector
 import re
 
 app = Flask(__name__)
@@ -62,9 +63,25 @@ def newAttendee():
             #return redirect(url_for('show_all'))
     return render_template("newAttendee.html", tzones = time_zone.query.all())
 
+@app.route("/newCreator/", methods = ['GET', 'POST'])
+def newCreator():
+    if request.method == 'POST':
+        if not request.form['first_name'] or not request.form['last_name'] or not request.form['time_zone_name'] or not request.form['email']:
+            flash('Please enter all the fields', 'error')
+        else:
+            pers = person(request.form['first_name'], request.form['last_name'], request.form['time_zone_name'], request.form['email'])
+        
+            db.session.add(pers)
+            db.session.commit()
+         
+            flash('Record was successfully added')
+            #return redirect(url_for('show_all'))
+   
+    return render_template("newCreator.html", tzones = time_zone.query.all())
+
 @app.route("/ranking/")
 def ranking():
-    cnx = mysql.connector.connect(user="", password="", host="", database="")
+    cnx = mysql.connector.connect(user="root", password="123456", host="35.232.209.150", database="mydb")
     cursor = cnx.cursor()
     try:
         query = """
@@ -82,7 +99,7 @@ def ranking():
     cursor.close()
     cnx.close()
 
-    cnx2 = mysql.connector.connect(user="", password="", host="", database="")
+    cnx2 = mysql.connector.connect(user="root", password="123456", host="35.232.209.150", database="mydb")
     cursor2 = cnx2.cursor()
     try:
         query2 = """

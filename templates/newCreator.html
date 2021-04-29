@@ -1,0 +1,22 @@
+{% extends "layout.html" %}
+{% block title %}
+myMEETR
+{% endblock %}
+{% block content %}
+<p>New Creator</p>
+<form action = "{{ request.path }}" method = "post">
+    <label for = "first_name">First Name</label>
+    <input type = "text" name = "first_name"/><br>
+    <label for = "last_name">Last Name</label>
+    <input type = "text" name = "last_name"/><br>
+    <label style="padding-right: 37px" for = "email">Email</label>
+    <input type = "text" name = "email"/><br>
+    <label for="time_zone_name">Time Zone</label>
+    <select name="time_zone_name">
+        {% for tzone in tzones %}
+            <option value="{{ tzone.tname }}">{{ tzone.tname }}</option>
+        {% endfor %}
+    </select>
+    <br>
+    <input type = "submit" value = "Submit" />
+{% endblock %}
