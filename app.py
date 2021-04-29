@@ -127,8 +127,8 @@ def home():
         
         #creator details entered
         if not meeting_id and not A_email and not R_meeting_id and M_email:
-            #check if meeting_id exists
-            mexists = db.session.query(db.exists().where(meeting_details.meeting_id == meeting_id)).scalar()
+            #check if creator exists
+            mexists = db.session.query(person.email).join(meeting_details, meeting_details.creator_id == person.id).filter(person.email == M_email).first()
 
             #if meeting_id exists = redirect to creator enter meeting details page
             if mexists:
