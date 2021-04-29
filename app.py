@@ -14,9 +14,6 @@ import config #stores passwords and database credentials
 app = Flask(__name__)
 app.secret_key = config.secret_key
 app.config ['SQLALCHEMY_DATABASE_URI'] = config.db_uri
-# password is database pwd
-# localhost is ip address (of instance)
-# db_name is db name (db3 for example)
 
 db = SQLAlchemy(app)
 
@@ -202,16 +199,20 @@ def newCreator():
 @app.route("/availability/", methods = ['GET', 'POST'])
 def availability():
     if request.method == 'POST':
+        # check to make sure all the values were filled
         if not request.form['start_time'] or not request.form['end_time'] or not request.form['importance_name'] or not request.form['year'] or not request.form['month'] or not request.form['date']:
-            flash('Please enter all the fields', 'error')
+            return render_template('availability.html', implevels = importance.query.all())
         else:
             # do all my error checky checks
+
+            # first get all the values 
             a_role = request.form['importance_name']
 
             date = int(request.form['date'])
             year = request.form['year']
             month = request.form['month']
 
+            # from the start time and the end time, get the hours and the minutes
             stime = request.form['start_time']
             shour = int(stime.split(':')[0])
             sminutes = int(stime.split(':')[1])
@@ -220,11 +221,13 @@ def availability():
             ehour = int(etime.split(':')[0])
             eminutes = int(etime.split(':')[1])
   
+            # bool vars to check if any of these values go to the prev or the next day
             snext = False
             enext = False
             sprev = False
             eprev = False
 
+            # get the person's id and the time zone that this person is in
             cnx = mysql.connector.connect(user=config.user, password=config.password, host=config.host, database=config.db)
             cursor = cnx.cursor(prepared=True)
             query = """
@@ -239,6 +242,7 @@ def availability():
             attendee_id = data[0][0]
             tz = data[0][1]
 
+            # get the offset of the timezone
             cnx2 = mysql.connector.connect(user=config.user, password=config.password, host=config.host, database=config.db)
             cursor2 = cnx2.cursor(prepared=True)
             query2 = """
@@ -251,8 +255,11 @@ def availability():
             cursor2.close()
             cnx2.close()
 
+            # get the minutes and the hours of the offset
             min_frac, hour = math.modf(offset)
 
+            # do the math for minutes, multiply the offset decimal by 60, add to the minutes, and check if the value
+            # do modular math to get the right incremented value
             min_frac = min_frac * 60
             sminutes = sminutes + min_frac
             if sminutes < 0:
@@ -268,6 +275,8 @@ def availability():
                 ehour = ehour + 1
             eminutes = eminutes % 60
 
+            # do the math for hours, check the value
+            # do modular math to increment correctly
             shour = shour + hour
             if shour < 0:
                 sprev = True
@@ -282,10 +291,11 @@ def availability():
                 enext = True
             ehour = ehour % 24
 
+            # not on the same day
             if sprev != eprev or snext != enext:
-                print("not on the same day")
                 return render_template('availability.html', implevels = importance.query.all())
             
+            # get the dates and the time_block for the meeting
             cnx3 = mysql.connector.connect(user=config.user, password=config.password, host=config.host, database=config.db)
             cursor3 = cnx3.cursor(prepared=True)
             query3 = """
@@ -297,10 +307,12 @@ def availability():
             cursor3.close()
             cnx3.close()
 
+            # make all of these datetime.datetime
             first_day = datetime.datetime.combine(data3[0][0], datetime.time(0, 0))
             last_day = datetime.datetime.combine(data3[0][1], datetime.time(0, 0))
             time_block = decimal.Decimal(data3[0][2])
 
+            # increment the date based on what we calculated in the hours and minutes section
             if sprev == True:
                 date = date - 1
             elif snext == True:
@@ -309,6 +321,7 @@ def availability():
             full_date = year + "-" + month + "-" + str(date)
             date_obj = datetime.datetime.strptime(full_date, '%Y-%m-%d')
 
+            # check if it is between the right days/months/years
             if first_day <= date_obj <= last_day:
                 print("")
             else:
@@ -317,6 +330,7 @@ def availability():
             start_time = ""
             end_time = ""
 
+            # get the right time printed out in the correct format
             s_string = str(sminutes) 
             length = len(s_string) 
             if length == 1:
@@ -343,13 +357,12 @@ def availability():
             d_min_to_hour = dminutes/60
             delta_time = dhour + d_min_to_hour
 
+            # number of hours and minutes is wrong compared to the one provided from the meeting
             if delta_time != time_block:
-                print("incorrect time block")
                 return render_template('availability.html', implevels = importance.query.all())
             
 
             # now we finally know that the data is CORRECT!
-            # variables to use: start_time, end_time, full_date
             cnx4 = mysql.connector.connect(user=config.user, password=config.password, host=config.host, database=config.db)
             cursor4 = cnx4.cursor(prepared=True)
             query4 = """
@@ -366,7 +379,6 @@ def availability():
             av_id = 0
             
             if len(data4)==0:
-                print('There is no component')
                 ai = availability_info(full_date, start_time, end_time)
                 db.session.add(ai)
                 db.session.commit()
@@ -399,7 +411,7 @@ def availability():
                     from attendee_info
                     where attendee_info.person_id = %s
                     and attendee_info.meeting_id = %s;"""
-            cursor6.execute(query6, (a_role, attendee_id, meeting_id, ))
+            cursor6.execute(query6, (attendee_id, meeting_id, ))
             data6 = cursor6.fetchall()
             cursor6.close()
             cnx6.close()
