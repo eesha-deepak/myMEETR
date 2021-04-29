@@ -78,7 +78,7 @@ def home():
 
         A_email = request.form['A_email']
         M_email = request.form['M_email']
-        
+
         R_meeting_id = request.form['R_meeting_id']
         meeting_id_ranking = R_meeting_id
 
@@ -89,34 +89,14 @@ def home():
             #check if attendee meeting_id exists
             mexists = db.session.query(db.exists().where(meeting_details.meeting_id == meeting_id)).scalar()
 
-            #cursor for checking if meeting_id for attendee exists
-            cnx = mysql.connector.connect(user="root", password="", host="", database="")
-            cursor = cnx.cursor()
-            try:
-                query = "select * from link_meeting lm join person p on lm.person_id = p.person_id where (lm.meeting_id = "+meeting_id+") and (p.email = '"+A_email+"');"
-                cursor.execute(query)
-            except mysql.connector.Error as err:
-                print(err)
-    
-            result = cursor.fetchall()
-            cursor.close()
-            cnx.close()
-
-            check = 0
-            for row in result:
-                check = check + 1
-
             #meeting_id exists and attendee does not exist = redirect to newAttendee page
             if(mexists and not pexists):
                 return redirect(url_for('newAttendee'))
 
             #meeting exists for attendee = redirect to attendee page
-            #if (check>0):
-                #flash('redirect to attendee page')
-                #return redirect(url_for('availability'))
-            # both meeting id and person exist
-            if(mexists and pexists):
-                return redirect(url_for('availability'))
+            if (mexists and pexists):
+                flash('redirect to attendee page')
+                #return redirect(url_for('ATTENDEE PAGE'))
 
             #meeting_id and/or attendee was entered incorrectly
             else:
@@ -189,8 +169,8 @@ def availability():
         if not request.form['start_time'] or not request.form['end_time'] or not request.form['importance_name'] or not request.form['date']:
             flash('Please enter all the fields', 'error')
         else:
-            # do all my checky checks
-         
+            flash('in else')
+            # do all my checky checks     
     return render_template("availability.html", implevels = importance.query.all())
 
 @app.route("/ranking/")
@@ -204,8 +184,8 @@ def ranking():
                     (select link_meeting.availability_id, person.person_id, date, start_time, end_time from availability_info, person, link_meeting where link_meeting.person_id = person.person_id and link_meeting.availability_id = availability_info.availability_id and link_meeting.meeting_id = %s) 
                     as table_times 
                 group by availability_id 
-                order by people_available desc;"""
-        cursor.execute(query, (meeting_id_ranking, ))
+                order by people_available desc;""".format(meeting_id_ranking)
+        cursor.execute(query)
     except mysql.connector.Error as err:
         print(err)
     
@@ -230,8 +210,8 @@ def ranking():
                     and link_meeting.meeting_id = %s
                     and importance.meeting_role = attendee_info.meeting_role) as tables
                 group by availability_id
-                order by level_1 desc, level_2 desc, level_3 desc, level_4 desc, level_5 desc) as level_times;"""
-        cursor2.execute(query2, (meeting_id_ranking, ))
+                order by level_1 desc, level_2 desc, level_3 desc, level_4 desc, level_5 desc) as level_times;""".format(meeting_id_ranking)
+        cursor2.execute(query2)
     except mysql.connector.Error as err:
         print(err)
     
