@@ -1,7 +1,7 @@
 from flask import Flask
 from flask import render_template
 from flask_sqlalchemy import SQLAlchemy
-from datetime import datetime
+import datetime
 from flask import request
 from flask import flash
 from flask import redirect, render_template, url_for
@@ -9,6 +9,8 @@ from flask import redirect, render_template, url_for
 import mysql.connector
 import re
 import sqlalchemy
+import math
+import decimal
 
 
 app = Flask(__name__)
@@ -18,11 +20,8 @@ app.config ['SQLALCHEMY_DATABASE_URI'] = 'mysql://root:12345@34.94.231.54/db1'
 # localhost is ip address (of instance)
 # db_name is db name (db3 for example)
 
-meeting_id_ranking = 1
-meeting_id_attendee = 1
-email_attendee = ""
-
 db = SQLAlchemy(app)
+
 class person(db.Model):
     id = db.Column('person_id', db.Integer, primary_key = True)
     first_name = db.Column(db.String(50))
@@ -35,6 +34,17 @@ class person(db.Model):
         self.last_name = last_name
         self.time_zone_name = time_zone_name
         self.email = email
+
+class availability_info(db.Model):
+    id = db.Column('availability_id', db.Integer, primary_key = True)
+    date = db.Column(db.String(50))
+    start_time = db.Column(db.String(50))  
+    end_time = db.Column(db.String(50))
+
+    def __init__(self, date, start_time, end_time):
+        self.date = date
+        self.start_time = start_time
+        self.end_time = end_time
 
 class time_zone(db.Model):
     tname = db.Column('name', db.String(50), primary_key = True)
@@ -54,13 +64,23 @@ class importance(db.Model):
 
 class link_meeting(db.Model):
     availability_id = db.Column('availability_id', db.Integer, primary_key = True)
-    meeting_id = db.Column('meeting_id', db.Integer, primary_key = True)
     person_id = db.Column('person_id', db.Integer, primary_key = True)
+    meeting_id = db.Column('meeting_id', db.Integer, primary_key = True)
 
-    def __init__(self, tname, offset):
+    def __init__(self, availability_id, person_id, meeting_id):
         self.availability_id = availability_id
-        self.meeting_id = meeting_id
         self.person_id = person_id
+        self.meeting_id = meeting_id
+
+class attendee_info(db.Model):
+    person_id = db.Column('person_id', db.Integer, primary_key = True)
+    meeting_id = db.Column('meeting_id', db.Integer, primary_key = True)
+    role = db.Column('meeting_role', db.String(50), primary_key = True)
+
+    def __init__(self, person_id, meeting_id, role):
+        self.person_id = person_id
+        self.meeting_id = meeting_id
+        self.role = role
 
 class meeting_details(db.Model):
     meeting_id = db.Column('meeting_id', db.Integer, primary_key = True)
@@ -74,21 +94,23 @@ class meeting_details(db.Model):
 def home():
     if request.method == 'POST':
         #get welcome page variables
+        global meeting_id 
         meeting_id = request.form['meeting_id']
-        meeting_id_attendee = meeting_id
 
+        global A_email
         A_email = request.form['A_email']
-        email_attendee = A_email
 
+        global M_email
         M_email = request.form['M_email']
 
+        global R_meeting_id
         R_meeting_id = request.form['R_meeting_id']
-        meeting_id_ranking = R_meeting_id
 
         #attendee details entered
         if meeting_id and A_email and not M_email and not R_meeting_id:
             #check if attendee email exists
             pexists = db.session.query(db.exists().where(person.email == A_email)).scalar()
+
             #check if attendee meeting_id exists
             mexists = db.session.query(db.exists().where(meeting_details.meeting_id == meeting_id)).scalar()
 
@@ -171,20 +193,209 @@ def availability():
         if not request.form['start_time'] or not request.form['end_time'] or not request.form['importance_name'] or not request.form['year'] or not request.form['month'] or not request.form['date']:
             flash('Please enter all the fields', 'error')
         else:
-            # do all my checky checks
-            stime = request.form['start_time']
-            etime = request.form['end_time']
-            date = request.form['date']
+            # do all my error checky checks
+            a_role = request.form['importance_name']
+
+            date = int(request.form['date'])
             year = request.form['year']
-            month = request.form['month'] 
-            # year-month-date
+            month = request.form['month']
+
+            stime = request.form['start_time']
+            shour = int(stime.split(':')[0])
+            sminutes = int(stime.split(':')[1])
+
+            etime = request.form['end_time']
+            ehour = int(etime.split(':')[0])
+            eminutes = int(etime.split(':')[1])
+  
             snext = False
             enext = False
-            print(stime)
-            print(etime)
-            print(date)
-            print(year)
-            print(month)
+            sprev = False
+            eprev = False
+
+            cnx = mysql.connector.connect(user="root", password="12345", host="34.94.231.54", database="db1")
+            cursor = cnx.cursor(prepared=True)
+            query = """
+                    select person_id, time_zone_name
+                    from person
+                    where person.email = %s;"""
+            cursor.execute(query, (A_email, ))
+            
+            data = cursor.fetchall()
+            cursor.close()
+            cnx.close()
+            attendee_id = data[0][0]
+            tz = data[0][1]
+
+            cnx2 = mysql.connector.connect(user="root", password="12345", host="34.94.231.54", database="db1")
+            cursor2 = cnx2.cursor(prepared=True)
+            query2 = """
+                    select offset
+                    from time_zone
+                    where time_zone.name = %s;"""
+            cursor2.execute(query2, (tz, ))
+            
+            offset = decimal.Decimal(cursor2.fetchall()[0][0])
+            cursor2.close()
+            cnx2.close()
+
+            min_frac, hour = math.modf(offset)
+
+            min_frac = min_frac * 60
+            sminutes = sminutes + min_frac
+            if sminutes < 0:
+                shour = shour - 1
+            elif sminutes >= 60:
+                shour = shour + 1
+            sminutes = sminutes % 60
+
+            eminutes = eminutes + min_frac
+            if eminutes < 0:
+                ehour = ehour - 1
+            elif eminutes >= 60:
+                ehour = ehour + 1
+            eminutes = eminutes % 60
+
+            shour = shour + hour
+            if shour < 0:
+                sprev = True
+            elif shour >= 24:
+                snext = True
+            shour = shour % 24
+            
+            ehour = ehour + hour
+            if ehour < 0:
+                eprev = True
+            elif ehour >= 24:
+                enext = True
+            ehour = ehour % 24
+
+            if sprev != eprev or snext != enext:
+                print("not on the same day")
+                return render_template('availability.html', implevels = importance.query.all())
+            
+            cnx3 = mysql.connector.connect(user="root", password="12345", host="34.94.231.54", database="db1")
+            cursor3 = cnx3.cursor(prepared=True)
+            query3 = """
+                    select start_day, end_day, length_hr
+                    from meeting_details
+                    where meeting_details.meeting_id = %s;"""
+            cursor3.execute(query3, (meeting_id, ))
+            data3 = cursor3.fetchall()
+            cursor3.close()
+            cnx3.close()
+
+            first_day = datetime.datetime.combine(data3[0][0], datetime.time(0, 0))
+            last_day = datetime.datetime.combine(data3[0][1], datetime.time(0, 0))
+            time_block = decimal.Decimal(data3[0][2])
+
+            if sprev == True:
+                date = date - 1
+            elif snext == True:
+                date = date + 1
+
+            full_date = year + "-" + month + "-" + str(date)
+            date_obj = datetime.datetime.strptime(full_date, '%Y-%m-%d')
+
+            if first_day <= date_obj <= last_day:
+                print("")
+            else:
+                return render_template('availability.html', implevels = importance.query.all())
+            
+            start_time = ""
+            end_time = ""
+
+            s_string = str(sminutes) 
+            length = len(s_string) 
+            if length == 1:
+                start_time = str(int(shour)) + ":0" + str(int(sminutes)) + ":00"
+            elif sminutes == 0:
+                start_time = str(int(shour)) + ":00:00"
+            else:
+                start_time = str(int(shour)) + ":" + str(int(sminutes)) + ":00"
+
+            e_string = str(eminutes) 
+            length = len(e_string) 
+            if length == 1:
+                end_time = str(int(ehour)) + ":0" + str(int(eminutes)) + ":00"
+            elif eminutes == 0:
+                end_time = str(int(ehour)) + ":00:00"
+            else:
+                end_time = str(int(ehour)) + ":" + str(int(eminutes)) + ":00"
+            
+            FMT = '%H:%M:%S'
+            tdelta = datetime.datetime.strptime(end_time, FMT) - datetime.datetime.strptime(start_time, FMT)
+            dhour = int(str(tdelta).split(':')[0])
+            dminutes = int(str(tdelta).split(':')[1])
+
+            d_min_to_hour = dminutes/60
+            delta_time = dhour + d_min_to_hour
+
+            if delta_time != time_block:
+                print("incorrect time block")
+                return render_template('availability.html', implevels = importance.query.all())
+            
+
+            # now we finally know that the data is CORRECT!
+            # variables to use: start_time, end_time, full_date
+            cnx4 = mysql.connector.connect(user="root", password="12345", host="34.94.231.54", database="db1")
+            cursor4 = cnx4.cursor(prepared=True)
+            query4 = """
+                    select availability_id
+                    from availability_info
+                    where availability_info.date = %s
+                    and availability_info.start_time = %s
+                    and availability_info.end_time = %s;"""
+            cursor4.execute(query4, (full_date, start_time, end_time, ))
+            data4 = cursor4.fetchall()
+            cursor4.close()
+            cnx4.close()
+
+            av_id = 0
+            
+            if len(data4)==0:
+                print('There is no component')
+                ai = availability_info(full_date, start_time, end_time)
+                db.session.add(ai)
+                db.session.commit()
+                av_id = ai.id
+            else:
+                av_id = data4[0][0]
+
+            cnx5 = mysql.connector.connect(user="root", password="12345", host="34.94.231.54", database="db1")
+            cursor5 = cnx5.cursor(prepared=True)
+            query5 = """
+                    select *
+                    from link_meeting
+                    where link_meeting.availability_id = %s
+                    and link_meeting.person_id = %s
+                    and link_meeting.meeting_id = %s;"""
+            cursor5.execute(query5, (av_id, attendee_id, meeting_id, ))
+            data5 = cursor5.fetchall()
+            cursor5.close()
+            cnx5.close()
+            
+            if len(data5)==0:
+                lm = link_meeting(av_id, attendee_id, meeting_id)
+                db.session.add(lm)
+                db.session.commit()
+            
+            cnx6 = mysql.connector.connect(user="root", password="12345", host="34.94.231.54", database="db1")
+            cursor6 = cnx6.cursor(prepared=True)
+            query6 = """
+                    select *
+                    from attendee_info
+                    where attendee_info.person_id = %s
+                    and attendee_info.meeting_id = %s;"""
+            cursor6.execute(query6, (a_role, attendee_id, meeting_id, ))
+            data6 = cursor6.fetchall()
+            cursor6.close()
+            cnx6.close()
+            
+            if len(data6)==0:
+                ai = attendee_info(attendee_id, meeting_id, a_role)
+                db.session.add(ai)
+                db.session.commit()
          
     return render_template("availability.html", implevels = importance.query.all())
 
@@ -200,7 +411,7 @@ def ranking():
                     as table_times 
                 group by availability_id 
                 order by people_available desc;"""
-        cursor.execute(query, (meeting_id_ranking, ))
+        cursor.execute(query, (R_meeting_id, ))
     except mysql.connector.Error as err:
         print(err)
     
@@ -226,7 +437,7 @@ def ranking():
                     and importance.meeting_role = attendee_info.meeting_role) as tables
                 group by availability_id
                 order by level_1 desc, level_2 desc, level_3 desc, level_4 desc, level_5 desc) as level_times;"""
-        cursor2.execute(query2, (meeting_id_ranking, ))
+        cursor2.execute(query2, (R_meeting_id, ))
     except mysql.connector.Error as err:
         print(err)
     
