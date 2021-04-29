@@ -13,13 +13,14 @@ import sqlalchemy
 
 app = Flask(__name__)
 app.secret_key = "super secret key"
-app.config ['SQLALCHEMY_DATABASE_URI'] = 'mysql://root:pwd@localhost/db_name'
+app.config ['SQLALCHEMY_DATABASE_URI'] = 'mysql://root:12345@34.94.231.54/db1'
 # password is database pwd
 # localhost is ip address (of instance)
 # db_name is db name (db3 for example)
 
 meeting_id_ranking = 1
 meeting_id_attendee = 1
+email_attendee = ""
 
 db = SQLAlchemy(app)
 class person(db.Model):
@@ -77,6 +78,8 @@ def home():
         meeting_id_attendee = meeting_id
 
         A_email = request.form['A_email']
+        email_attendee = A_email
+
         M_email = request.form['M_email']
 
         R_meeting_id = request.form['R_meeting_id']
@@ -170,13 +173,24 @@ def availability():
         else:
             # do all my checky checks
             stime = request.form['start_time']
-            etime = request.form['end_time'] 
+            etime = request.form['end_time']
+            date = request.form['date']
+            year = request.form['year']
+            month = request.form['month'] 
+            # year-month-date
+            snext = False
+            enext = False
+            print(stime)
+            print(etime)
+            print(date)
+            print(year)
+            print(month)
          
     return render_template("availability.html", implevels = importance.query.all())
 
 @app.route("/ranking/")
 def ranking():
-    cnx = mysql.connector.connect(user="root", password="", host="", database="")
+    cnx = mysql.connector.connect(user="root", password="12345", host="34.94.231.54", database="db1")
     cursor = cnx.cursor(prepared=True)
     try:
         query = """
@@ -194,7 +208,7 @@ def ranking():
     cursor.close()
     cnx.close()
 
-    cnx2 = mysql.connector.connect(user="root", password="", host="", database="")
+    cnx2 = mysql.connector.connect(user="root", password="12345", host="34.94.231.54", database="db1")
     cursor2 = cnx2.cursor(prepared=True)
     try:
         query2 = """
