@@ -147,7 +147,20 @@ def home():
         #creator details entered
         if not meeting_id and not A_email and not R_meeting_id and M_email:
             #check if creator exists
-            mexists = db.session.query(person.email).join(meeting_details, meeting_details.creator_id == person.id).filter(person.email == M_email).first()
+            #mexists = db.session.query(person.email).join(meeting_details, meeting_details.creator_id == person.id).filter(person.email == M_email).first()
+
+            cnx = mysql.connector.connect(user=config.user, password=config.password, host=config.host, database=config.db)
+            cursor = cnx.cursor(prepared=True)
+            query = """
+                SELECT p.email
+                FROM person p 
+	                JOIN meeting_details m ON p.person_id = m.creator_id
+                WHERE p.email = %s
+                LIMIT 1;"""
+            cursor.execute(query, (M_email, ))
+            mexists = cursor.fetchall()
+            cursor.close()
+            cnx.close()
 
             #if meeting_id exists = redirect to creator enter meeting details page
             if mexists:
