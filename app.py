@@ -95,8 +95,12 @@ def home():
 
             #meeting exists for attendee = redirect to attendee page
             if (mexists and pexists):
+<<<<<<< HEAD
                 flash('redirect to attendee page')
                 #return redirect(url_for('ATTENDEE PAGE'))
+=======
+                return redirect(url_for('availability'))
+>>>>>>> ba3f505 (synced)
 
             #meeting_id and/or attendee was entered incorrectly
             else:
