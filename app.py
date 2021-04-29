@@ -7,6 +7,9 @@ from flask import redirect, render_template, url_for
 import mysql.connector
 import re
 import sqlalchemy
+from sqlalchemy import join
+from sqlalchemy.sql import select
+from sqlalchemy import Table, Column, Float, Integer, String, MetaData, ForeignKey, Numeric, SmallInteger, DATE
 import math
 import decimal
 import config #stores passwords and database credentials
@@ -79,9 +82,25 @@ class attendee_info(db.Model):
 
 class meeting_details(db.Model):
     meeting_id = db.Column('meeting_id', db.Integer, primary_key = True)
+    in_person = db.Column('in_person', db.Integer)
+    online = db.Column('online', db.Integer)
+    start_day = db.Column('start_day', db.String(50))
+    end_day = db.Column('end_day', db.String(50))
+    length_hr = db.Column('length_hr', Numeric)
+    description = db.Column('description', db.String(200))
+    creator_id = db.Column('creator_id', db.Integer)
 
-    def __init__(self, tname, offset):
-        self.meeting_id = ameeting_id
+    def __init__(self, in_person, online, start_day, end_day, length_hr, description,creator_id):
+        self.in_person = in_person
+        self.online = online
+        self.start_day = start_day
+        self.end_day = end_day
+        self.length_hr = length_hr
+        self.description = description
+        self.creator_id = creator_id
+
+#will need to get from "Creator: enter details page"
+creator_meeting_id = 1
 
 if __name__ == '__main__':
     #To create/use the database mentioned in the URI
@@ -133,7 +152,7 @@ def home():
             #if meeting_id exists = redirect to creator enter meeting details page
             if mexists:
                 flash('redirect to creator dashboard page')
-                #return redirect(url_for('CREATE MEETING'))
+                return redirect(url_for('creatorMeeting'))
             
             #if meeting_id does not exist = redirect to new creator page
             else:
@@ -151,7 +170,7 @@ def home():
 
             #if meeting_id does not exists = error
             else:
-                flash('incorrect meeting id for  ranking')
+                flash('incorrect meeting id for ranking')
                 return render_template('welcome.html')
         
         #all the fields were empty
@@ -471,8 +490,29 @@ def ranking():
 
     return render_template('ranking.html', data=data, data2=data2)
 
+@app.route("/editMeetingDetails/", methods = ['GET', 'POST'])
+def editMeetingDetails():
+    if request.method == 'POST':
+        flash('in edit meeting')
+    return render_template("editMeetingDetails.html")
+
+@app.route("/creatorMeeting/", methods = ['GET', 'POST'])
+def creatorMeeting():
+    if request.method == 'POST':
+
+        if request.form['inperson'] and request.form['online'] and request.form['length'] and request.form['meeting_description'] and request.form['start_day'] and request.form['end_day']:
+            newMeeting = meeting_details(request.form['inperson'], request.form['online'], request.form['start_day'], request.form['end_day'], request.form['length'], request.form['meeting_description'], creator_meeting_id)
+            db.session.add(newMeeting)
+            db.session.commit()
+            flash('Record was successfully added')
+
+        elif not request.form['inperson'] or not request.form['online'] or not request.form['length'] or not request.form['meeting_description'] or not request.form['start_day'] or not request.form['end_day']:
+            flash('Please enter all the fields','error')
+ 
+
+    return render_template("creatorMeeting.html")
+
 @app.route("/hello/")
-@app.route("/hello/<name>")
 def hello_there(name = None):
     return render_template(
         "hello_there.html",
