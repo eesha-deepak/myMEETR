@@ -165,7 +165,7 @@ def home():
             #if meeting_id exists = redirect to creator enter meeting details page
             if mexists:
                 flash('redirect to creator dashboard page')
-                return redirect(url_for('creatorMeeting'))
+                #return redirect(url_for('CREATOR DASHBOARD PAGE'))
             
             #if meeting_id does not exist = redirect to new creator page
             else:
