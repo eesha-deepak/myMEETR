@@ -100,7 +100,10 @@ class meeting_details(db.Model):
         self.creator_id = creator_id
 
 #will need to get from "Creator: enter details page"
-creator_meeting_id = 1
+creator_meeting_id = 6
+
+#set in welcome where mcreator email exists 
+creator_id = 1
 
 if __name__ == '__main__':
     #To create/use the database mentioned in the URI
@@ -147,8 +150,6 @@ def home():
         #creator details entered
         if not meeting_id and not A_email and not R_meeting_id and M_email:
             #check if creator exists
-            #mexists = db.session.query(person.email).join(meeting_details, meeting_details.creator_id == person.id).filter(person.email == M_email).first()
-
             cnx = mysql.connector.connect(user=config.user, password=config.password, host=config.host, database=config.db)
             cursor = cnx.cursor(prepared=True)
             query = """
@@ -164,8 +165,12 @@ def home():
 
             #if meeting_id exists = redirect to creator enter meeting details page
             if mexists:
+                mci = db.session.query(meeting_details.creator_id).join(person, meeting_details.creator_id == person.id).filter(person.email == M_email).first()
+                creator_id = mci[0]
                 flash('redirect to creator dashboard page')
                 #return redirect(url_for('CREATOR DASHBOARD PAGE'))
+                #take out line below and use line below
+                return render_template('welcome.html')
             
             #if meeting_id does not exist = redirect to new creator page
             else:
@@ -187,12 +192,13 @@ def home():
                 return render_template('welcome.html')
         
         #all the fields were empty
-        elif not meeting_id and not A_email and not M_email:
+        if not meeting_id and not A_email and not M_email:
             flash('nothing was entered, all fields are blank')
             return render_template('welcome.html')
         
         #lol in case some happens eekie
         else:
+            flash('some weird error, try again')
             return render_template('welcome.html')
     else: 
         return render_template('welcome.html')
@@ -505,16 +511,85 @@ def ranking():
 
 @app.route("/editMeetingDetails/", methods = ['GET', 'POST'])
 def editMeetingDetails():
+    mode = db.session.query(meeting_details.in_person).filter(meeting_details.meeting_id == creator_meeting_id).all()
+    inp = mode[0][0]
+    if(inp == 1):
+        m = 'in person'
+        inp = 1
+    else:
+        m = 'online'
+        inp = 0
+
+    startDay = db.session.query(meeting_details.start_day).filter(meeting_details.meeting_id == creator_meeting_id).all()
+    start = startDay[0][0].split('-')
+    sy = start[0]
+    sm = start[1]
+    sd = start[2]
+
+    endDay = db.session.query(meeting_details.end_day).filter(meeting_details.meeting_id == creator_meeting_id).all()
+    end = endDay[0][0].split('-')
+    ey = end[0]
+    em = end[1]
+    ed = end[2]
+
+    length = db.session.query(meeting_details.length_hr).filter(meeting_details.meeting_id == creator_meeting_id).all()
+    len = length[0][0]
+
+    desc = db.session.query(meeting_details.description).filter(meeting_details.meeting_id == creator_meeting_id).all()
+    d = desc[0][0]
+
+
     if request.method == 'POST':
-        flash('in edit meeting')
-    return render_template("editMeetingDetails.html")
+        m_mode = request.form['m_mode']
+        
+        s_year = request.form['s_year']
+        s_month = request.form['s_month']
+        s_day = request.form['s_day']
+        
+        e_year = request.form['e_year']
+        e_month = request.form['e_month']
+        e_day = request.form['e_day']
+
+        length_hr = request.form['length_hr']
+
+        descript = request.form['description']
+
+        
+        if(m_mode == 1):
+            in_person = 1
+            online = 0
+        else:
+            in_person = 0
+            online = 1
+
+        start_day = s_year + '-' + s_month + '-' + s_day
+        end_day = e_year + '-' + e_month + '-' + e_day
+
+        if(descript):
+            description = descript
+            db.session.query(meeting_details).filter(meeting_details.meeting_id == creator_meeting_id).update(
+                {'in_person':in_person, 'online':online, 'start_day':start_day, 'end_day':end_day, 'length_hr':length_hr, 'description':description, 'creator_id':creator_id})
+            db.session.commit() 
+            flash('your meeting details have been updated if you made any changes')
+            #return redirect(url_for('CREATOR DASHBOARD')) 
+            return redirect(url_for('home'))        
+        else:
+            description = d
+            db.session.query(meeting_details).filter(meeting_details.meeting_id == creator_meeting_id).update(
+                {'in_person':in_person, 'online':online, 'start_day':start_day, 'end_day':end_day, 'length_hr':length_hr, 'description':description, 'creator_id':creator_id})
+            db.session.commit() 
+            flash('your meeting details have been updated if you made any changes')
+            #return redirect(url_for('CREATOR DASHBOARD')) 
+            return redirect(url_for('home'))
+        
+    return render_template("editMeetingDetails.html", inp=inp, m=m, sy=sy, sm=sm, sd=sd, ey=ey, em=em, ed=ed, len=len, d=d)
 
 @app.route("/creatorMeeting/", methods = ['GET', 'POST'])
 def creatorMeeting():
     if request.method == 'POST':
 
         if request.form['inperson'] and request.form['online'] and request.form['length'] and request.form['meeting_description'] and request.form['start_day'] and request.form['end_day']:
-            newMeeting = meeting_details(request.form['inperson'], request.form['online'], request.form['start_day'], request.form['end_day'], request.form['length'], request.form['meeting_description'], creator_meeting_id)
+            newMeeting = meeting_details(request.form['inperson'], request.form['online'], request.form['start_day'], request.form['end_day'], request.form['length'], request.form['meeting_description'], creator_id)
             db.session.add(newMeeting)
             db.session.commit()
             flash('Record was successfully added')
