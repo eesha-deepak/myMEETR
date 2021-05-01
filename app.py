@@ -12,6 +12,8 @@ from sqlalchemy.sql import select
 from sqlalchemy import Table, Column, Float, Integer, String, MetaData, ForeignKey, Numeric, SmallInteger, DATE
 import math
 import decimal
+from datetime import datetime
+from dateutil.parser import parse
 import config #stores passwords and database credentials
 
 app = Flask(__name__)
@@ -84,8 +86,8 @@ class meeting_details(db.Model):
     meeting_id = db.Column('meeting_id', db.Integer, primary_key = True)
     in_person = db.Column('in_person', db.Integer)
     online = db.Column('online', db.Integer)
-    start_day = db.Column('start_day', db.String(50))
-    end_day = db.Column('end_day', db.String(50))
+    start_day = db.Column('start_day', db.DATE)
+    end_day = db.Column('end_day', db.DATE)
     length_hr = db.Column('length_hr', Numeric)
     description = db.Column('description', db.String(200))
     creator_id = db.Column('creator_id', db.Integer)
@@ -100,7 +102,7 @@ class meeting_details(db.Model):
         self.creator_id = creator_id
 
 #will need to get from "Creator: enter details page"
-creator_meeting_id = 6
+creator_meeting_id = 5
 
 #set in welcome where mcreator email exists 
 creator_id = 1
@@ -513,6 +515,7 @@ def ranking():
 def editMeetingDetails():
     mode = db.session.query(meeting_details.in_person).filter(meeting_details.meeting_id == creator_meeting_id).all()
     inp = mode[0][0]
+    print(inp)
     if(inp == 1):
         m = 'in person'
         inp = 1
@@ -520,41 +523,13 @@ def editMeetingDetails():
         m = 'online'
         inp = 0
 
-    startDay = db.session.query(meeting_details.start_day).filter(meeting_details.meeting_id == creator_meeting_id).all()
-    start = startDay[0][0].split('-')
-    sy = start[0]
-    sm = start[1]
-    sd = start[2]
-
-    endDay = db.session.query(meeting_details.end_day).filter(meeting_details.meeting_id == creator_meeting_id).all()
-    end = endDay[0][0].split('-')
-    ey = end[0]
-    em = end[1]
-    ed = end[2]
-
-    length = db.session.query(meeting_details.length_hr).filter(meeting_details.meeting_id == creator_meeting_id).all()
-    len = length[0][0]
-
     desc = db.session.query(meeting_details.description).filter(meeting_details.meeting_id == creator_meeting_id).all()
     d = desc[0][0]
 
-
     if request.method == 'POST':
         m_mode = request.form['m_mode']
-        
-        s_year = request.form['s_year']
-        s_month = request.form['s_month']
-        s_day = request.form['s_day']
-        
-        e_year = request.form['e_year']
-        e_month = request.form['e_month']
-        e_day = request.form['e_day']
-
-        length_hr = request.form['length_hr']
-
         descript = request.form['description']
 
-        
         if(m_mode == 1):
             in_person = 1
             online = 0
@@ -562,13 +537,10 @@ def editMeetingDetails():
             in_person = 0
             online = 1
 
-        start_day = s_year + '-' + s_month + '-' + s_day
-        end_day = e_year + '-' + e_month + '-' + e_day
-
         if(descript):
             description = descript
             db.session.query(meeting_details).filter(meeting_details.meeting_id == creator_meeting_id).update(
-                {'in_person':in_person, 'online':online, 'start_day':start_day, 'end_day':end_day, 'length_hr':length_hr, 'description':description, 'creator_id':creator_id})
+                {'in_person':in_person, 'online':online, 'description':description, 'creator_id':creator_id})            
             db.session.commit() 
             flash('your meeting details have been updated if you made any changes')
             #return redirect(url_for('CREATOR DASHBOARD')) 
@@ -576,20 +548,24 @@ def editMeetingDetails():
         else:
             description = d
             db.session.query(meeting_details).filter(meeting_details.meeting_id == creator_meeting_id).update(
-                {'in_person':in_person, 'online':online, 'start_day':start_day, 'end_day':end_day, 'length_hr':length_hr, 'description':description, 'creator_id':creator_id})
+                {'in_person':in_person, 'online':online, 'description':description, 'creator_id':creator_id}) 
             db.session.commit() 
             flash('your meeting details have been updated if you made any changes')
             #return redirect(url_for('CREATOR DASHBOARD')) 
             return redirect(url_for('home'))
         
-    return render_template("editMeetingDetails.html", inp=inp, m=m, sy=sy, sm=sm, sd=sd, ey=ey, em=em, ed=ed, len=len, d=d)
+    return render_template("editMeetingDetails.html", inp=inp, m=m, d=d)
 
 @app.route("/creatorMeeting/", methods = ['GET', 'POST'])
 def creatorMeeting():
     if request.method == 'POST':
+        start = request.form['start_day']
+        end = request.form['end_day']
+        start_day = datetime.strptime(start, '%Y-%m-%d')
+        end_day = datetime.strptime(end, '%Y-%m-%d')
 
         if request.form['inperson'] and request.form['online'] and request.form['length'] and request.form['meeting_description'] and request.form['start_day'] and request.form['end_day']:
-            newMeeting = meeting_details(request.form['inperson'], request.form['online'], request.form['start_day'], request.form['end_day'], request.form['length'], request.form['meeting_description'], creator_id)
+            newMeeting = meeting_details(request.form['inperson'], request.form['online'], start_day, end_day, request.form['length'], request.form['meeting_description'], creator_id)
             db.session.add(newMeeting)
             db.session.commit()
             flash('Record was successfully added')
