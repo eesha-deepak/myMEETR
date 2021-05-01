@@ -267,33 +267,21 @@ def availability():
             sprev = False
             eprev = False
 
-            # get the person's id and the time zone that this person is in
+            # get the person's id and the time_zone offset
             cnx = mysql.connector.connect(user=config.user, password=config.password, host=config.host, database=config.db)
             cursor = cnx.cursor(prepared=True)
             query = """
-                    select person_id, time_zone_name
+                    select person.person_id, time_zone.offset
                     from person
+                        JOIN time_zone on person.time_zone_name = time_zone.name
                     where person.email = %s;"""
             cursor.execute(query, (A_email, ))
-            
+
             data = cursor.fetchall()
             cursor.close()
             cnx.close()
             attendee_id = data[0][0]
-            tz = data[0][1]
-
-            # get the offset of the timezone
-            cnx2 = mysql.connector.connect(user=config.user, password=config.password, host=config.host, database=config.db)
-            cursor2 = cnx2.cursor(prepared=True)
-            query2 = """
-                    select offset
-                    from time_zone
-                    where time_zone.name = %s;"""
-            cursor2.execute(query2, (tz, ))
-            
-            offset = decimal.Decimal(cursor2.fetchall()[0][0])
-            cursor2.close()
-            cnx2.close()
+            offset = decimal.Decimal(data[0][1])
 
             # get the minutes and the hours of the offset
             min_frac, hour = math.modf(offset)
