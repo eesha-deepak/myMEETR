@@ -102,7 +102,7 @@ class meeting_details(db.Model):
         self.creator_id = creator_id
 
 #will need to get from "Creator: enter details page"
-creator_meeting_id = 5
+creator_meeting_id = 1
 
 #set in welcome where mcreator email exists 
 creator_id = 1
