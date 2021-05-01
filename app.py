@@ -12,7 +12,7 @@ from sqlalchemy.sql import select
 from sqlalchemy import Table, Column, Float, Integer, String, MetaData, ForeignKey, Numeric, SmallInteger, DATE
 import math
 import decimal
-from datetime import datetime
+import datetime
 from dateutil.parser import parse
 import config #stores passwords and database credentials
 
@@ -561,8 +561,8 @@ def creatorMeeting():
     if request.method == 'POST':
         start = request.form['start_day']
         end = request.form['end_day']
-        start_day = datetime.strptime(start, '%Y-%m-%d')
-        end_day = datetime.strptime(end, '%Y-%m-%d')
+        start_day = datetime.datetime.strptime(start, '%Y-%m-%d')
+        end_day = datetime.datetime.strptime(end, '%Y-%m-%d')
 
         if request.form['inperson'] and request.form['online'] and request.form['length'] and request.form['meeting_description'] and request.form['start_day'] and request.form['end_day']:
             newMeeting = meeting_details(request.form['inperson'], request.form['online'], start_day, end_day, request.form['length'], request.form['meeting_description'], creator_id)
@@ -575,14 +575,6 @@ def creatorMeeting():
  
 
     return render_template("creatorMeeting.html")
-
-@app.route("/hello/")
-def hello_there(name = None):
-    return render_template(
-        "hello_there.html",
-        name=name,
-        date=datetime.now()
-    )
 
 @app.route("/api/data")
 def get_data():
