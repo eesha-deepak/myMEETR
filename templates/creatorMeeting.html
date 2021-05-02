@@ -1,4 +1,3 @@
-
 {% extends "layout.html" %}
 {% block title %}
 myMEETR
@@ -7,36 +6,22 @@ myMEETR
 <p>Create new meeting:</p>
 <form action = "{{ request.path }}" method = "post">
 
+    <label for="inperson-online">Meeting mode:</label>
+        <select name="inperson-online" value=''>Select meeting mode</option>
+            <option value=1>In Person</option>
+            <option value=0>Online</option>
+        </select><br>
 
-    <label for="inperson">In person</label>
-        <select name="inperson" value=''>Select In person</option>
-            <option value=1>yes</option>
-            <option value=0>no</option>
-        </select><br>
-    <label for="online">Online</label>
-        <select name="online" value=''>Select Online</option>
-            <option value=1>yes</option>
-            <option value=0>no</option>
-        </select><br>>
+    <label for = "length">Meeting length</label>
+        <input type = "number" step = 0.25 min="0.00" name = "length"/><br>
      
-    <label for="length">Meeting length</label>
-        <select name="length" value=''>Select meeting length</option>
-            <option value='0.25'>15 mins</option>
-            <option value='0.5'>30 mins</option>
-            <option value='0.75'>45 mins</option>
-            <option value='1'>1 hour</option>
-            <option value='1.25'>90 mins</option>
-            <option value='2'>2 hours</option>
-            <option value='3'>3 hours</option>
-            <option value='4'>4 hours</option>
-        </select><br>
     <label for = "meeting_description">Meeting Description</label>
         <input type = "text" name = "meeting_description"/><br>
 
-    <label for = "start_day">Start day</label>
+    <label for = "start_day">Please enter Start Day in yyyy-mm-dd format - ex: 2021-05-01</label>
         <input type = "text" name = "start_day"/><br>
 
-    <label for = "end_day">End day</label>
+    <label for = "end_day">Please enter End Day in yyyy-mm-dd format - ex: 2021-05-01</label>
         <input type = "text" name = "end_day"/><br>
     <input type = "submit" value = "Submit" />
 
