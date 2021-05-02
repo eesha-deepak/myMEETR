@@ -456,6 +456,8 @@ def availability():
                 ai = attendee_info(attendee_id, meeting_id, a_role)
                 db.session.add(ai)
                 db.session.commit()
+
+            flash('Availability was successfully added')
          
     return render_template("availability.html", implevels = importance.query.all())
 
