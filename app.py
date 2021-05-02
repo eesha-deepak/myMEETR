@@ -101,8 +101,6 @@ class meeting_details(db.Model):
         self.description = description
         self.creator_id = creator_id
 
-#will need to get from "Creator: enter details page"
-global creator_meeting_id
 
 
 if __name__ == '__main__':
@@ -177,10 +175,8 @@ def home():
             elif mexists:
                 mci = db.session.query(person.id).filter(person.email == M_email).first()
                 creator_id = mci[0]
-                flash('redirect to creator dashboard page')
                 #redirect to creator dashboard page
-                #return redirect(url_for('CREATOR DASHBOARD PAGE'))
-                return render_template('welcome.html')           
+                return redirect(url_for('dashboard'))         
             #if email for meeting creator or attendee does not exist and 
             else:
                 #redirect to new creator page
@@ -508,7 +504,6 @@ def ranking():
 
 @app.route("/editMeetingDetails/", methods = ['GET', 'POST'])
 def editMeetingDetails():
-    # inp = 1: inperson
     mode = db.session.query(meeting_details.in_person).filter(meeting_details.meeting_id == creator_meeting_id).all()
     m = mode[0][0]
     if(m == 1):
@@ -536,7 +531,6 @@ def editMeetingDetails():
             in_person = 0
             online = 1
 
-
         if(descript):
             description = descript
             db.session.query(meeting_details).filter(meeting_details.meeting_id == creator_meeting_id).update(
@@ -545,9 +539,9 @@ def editMeetingDetails():
             flash('your meeting details have been updated if you made any changes')
             flash('click "HOME" in the upper left hand corner to log out')
 
-            #return redirect(url_for('CREATOR DASHBOARD')) 
+            return redirect(url_for('dashboard')) 
             #return redirect(url_for('home'))   
-            return redirect(url_for('editMeetingDetails'))      
+            #return redirect(url_for('editMeetingDetails'))      
         elif (not descript):
             description = d
             db.session.query(meeting_details).filter(meeting_details.meeting_id == creator_meeting_id).update(
@@ -556,13 +550,49 @@ def editMeetingDetails():
             flash('your meeting details have been updated if you made any changes')
             flash('click "HOME" in the upper left hand corner to log out')
 
-            #return redirect(url_for('CREATOR DASHBOARD')) 
+            return redirect(url_for('dashboard')) 
             #return redirect(url_for('home'))
-            return redirect(url_for('editMeetingDetails'))
+            #return redirect(url_for('editMeetingDetails'))
         else:
             return redirect(url_for('editMeetingDetails'))
         
     return render_template("editMeetingDetails.html", inp=inp, p=p, op=op, o=o, d=d)
+
+
+@app.route("/dashboard/", methods = ['GET', 'POST'])
+def dashboard():
+    cnx7 = mysql.connector.connect(user=config.user, password=config.password, host=config.host, database=config.db)
+    cursor7 = cnx7.cursor(prepared=True)
+    query7 = """
+            select meeting_id, start_day, end_day, length_hr, description from meeting_details where creator_id = %s;
+            """
+    cursor7.execute(query7, (creator_id,))
+    data7 = cursor7.fetchall()
+    cursor7.close()
+    cnx7.close()
+
+    cnx8 = mysql.connector.connect(user=config.user, password=config.password, host=config.host, database=config.db)
+    cursor8 = cnx8.cursor(prepared=True)
+    query8 = """
+            select meeting_id from meeting_details where creator_id = %s;
+            """
+    cursor8.execute(query8, (creator_id,))
+    data8 = cursor8.fetchall()
+    cursor8.close()
+    cnx8.close()
+
+    if request.method == 'POST':
+        print("in post")
+
+        meeting_chosen = request.form['meeting_chosen']
+        if meeting_chosen == "new_meeting":
+            return redirect(url_for('creatorMeeting'))
+        else:
+            global creator_meeting_id
+            creator_meeting_id = int(request.form['meeting_chosen'])
+            return redirect(url_for('editMeetingDetails'))
+
+    return render_template('dashboard.html', data=data7, data2=data8)
 
 @app.route("/creatorMeeting/", methods = ['GET', 'POST'])
 def creatorMeeting():
@@ -597,6 +627,7 @@ def creatorMeeting():
             db.session.add(newMeeting)
             db.session.commit()
             flash('Record was successfully added')
+            return redirect(url_for('dashboard'))
 
         elif not request.form['inperson-online'] or not request.form['length'] or not request.form['meeting_description'] or not request.form['start_day'] or not request.form['end_day']:
             flash('Please enter all the fields','error')
