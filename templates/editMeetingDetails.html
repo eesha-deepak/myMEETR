@@ -5,13 +5,15 @@ myMEETR
 {% block content %}
 <p>Edit Meeting Details<p>
 <p>edit any of the following details you would like to update and click submit<p>
+<br>
 <form action = "{{ request.path }}" method = "post">
     <label for="m_mode">Edit meeting mode:</label>
     <select name=m_mode value=''>Meeting Mode: </option>
-        <option value="{{ inp }}">currently: {{ m }}</option>
-        <option value='1'>in person</option>
-        <option value='0'>online</option>
+        <option value="{{ inp }}"> {{ p }}</option>
+        <option value="{{ op }}"> {{ o }}</option>
     </select><br>
+
+    <br>
 
     <p>Current Meeting Decsription: "{{ d }}"<p>
     <label for = "description">Edit Meeting Description</label>
