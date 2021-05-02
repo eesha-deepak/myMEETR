@@ -102,10 +102,8 @@ class meeting_details(db.Model):
         self.creator_id = creator_id
 
 #will need to get from "Creator: enter details page"
-creator_meeting_id = 5
+global creator_meeting_id
 
-#set in welcome where mcreator exists to use in other app routes
-creator_id = 1
 
 if __name__ == '__main__':
     #To create/use the database mentioned in the URI
@@ -167,11 +165,12 @@ def home():
 
             pexists = db.session.query(db.exists().where(person.email == M_email)).scalar()
 
+            global creator_id
+
             #if email for meeting creator doesn't exist BUT an attendee does exist = redirect to creator enter meeting details page
             if (not mexists and pexists):
                 mci = db.session.query(person.id).filter(person.email == M_email).first()
                 creator_id = mci[0]
-                print(creator_id)
                 #redirect to creator new meeting page
                 return redirect(url_for('creatorMeeting'))
             #if email for meeting creator exists BUT an attendee NOT does not exist = redirect to creator enter meeting details page    
@@ -456,8 +455,6 @@ def availability():
                 ai = attendee_info(attendee_id, meeting_id, a_role)
                 db.session.add(ai)
                 db.session.commit()
-
-            flash('Availability was successfully added')
          
     return render_template("availability.html", implevels = importance.query.all())
 
@@ -533,7 +530,6 @@ def editMeetingDetails():
         descript = request.form['description']
 
         if (m_mode == '1'):
-            print("here tf")
             in_person = 1
             online = 0
         else:
@@ -571,20 +567,39 @@ def editMeetingDetails():
 @app.route("/creatorMeeting/", methods = ['GET', 'POST'])
 def creatorMeeting():
     if request.method == 'POST':
+        print(creator_id)
         start = request.form['start_day']
         end = request.form['end_day']
         start_day = datetime.datetime.strptime(start, '%Y-%m-%d')
         end_day = datetime.datetime.strptime(end, '%Y-%m-%d')
 
-        if request.form['inperson'] and request.form['online'] and request.form['length'] and request.form['meeting_description'] and request.form['start_day'] and request.form['end_day']:
-            newMeeting = meeting_details(request.form['inperson'], request.form['online'], start_day, end_day, request.form['length'], request.form['meeting_description'], creator_id)
+        length = float(request.form['length'])
+
+        meeting_format = request.form['inperson-online']
+        inperson = -1
+        online = -1
+        if(meeting_format == '1'):
+            inperson = 1
+            online = 0
+
+        else:
+            inperson = 0
+            online = 1
+
+        if length <= 0.00:
+            flash('Please enter a correct meeting length','error')
+
+        elif start_day > end_day:
+           flash('Please enter correct dates','error')
+
+        elif request.form['inperson-online'] and request.form['length'] and request.form['meeting_description'] and request.form['start_day'] and request.form['end_day']:
+            newMeeting = meeting_details(inperson, online, start_day, end_day, request.form['length'], request.form['meeting_description'], creator_id)
             db.session.add(newMeeting)
             db.session.commit()
             flash('Record was successfully added')
 
-        elif not request.form['inperson'] or not request.form['online'] or not request.form['length'] or not request.form['meeting_description'] or not request.form['start_day'] or not request.form['end_day']:
+        elif not request.form['inperson-online'] or not request.form['length'] or not request.form['meeting_description'] or not request.form['start_day'] or not request.form['end_day']:
             flash('Please enter all the fields','error')
- 
 
     return render_template("creatorMeeting.html")
 
