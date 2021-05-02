@@ -102,9 +102,9 @@ class meeting_details(db.Model):
         self.creator_id = creator_id
 
 #will need to get from "Creator: enter details page"
-creator_meeting_id = 1
+creator_meeting_id = 5
 
-#set in welcome where mcreator email exists 
+#set in welcome where mcreator exists to use in other app routes
 creator_id = 1
 
 if __name__ == '__main__':
@@ -137,11 +137,11 @@ def home():
             mexists = db.session.query(db.exists().where(meeting_details.meeting_id == meeting_id)).scalar()
 
             #meeting_id exists and attendee does not exist = redirect to newAttendee page
-            if(mexists and not pexists):
+            if (mexists and not pexists):
                 return redirect(url_for('newAttendee'))
 
             #meeting exists for attendee = redirect to attendee page
-            if (mexists and pexists):
+            elif (mexists and pexists):
                 return redirect(url_for('availability'))
 
             #meeting_id and/or attendee was entered incorrectly
@@ -165,18 +165,26 @@ def home():
             cursor.close()
             cnx.close()
 
-            #if meeting_id exists = redirect to creator enter meeting details page
-            if mexists:
-                mci = db.session.query(meeting_details.creator_id).join(person, meeting_details.creator_id == person.id).filter(person.email == M_email).first()
+            pexists = db.session.query(db.exists().where(person.email == M_email)).scalar()
+
+            #if email for meeting creator doesn't exist BUT an attendee does exist = redirect to creator enter meeting details page
+            if (not mexists and pexists):
+                mci = db.session.query(person.id).filter(person.email == M_email).first()
+                creator_id = mci[0]
+                print(creator_id)
+                #redirect to creator new meeting page
+                return redirect(url_for('creatorMeeting'))
+            #if email for meeting creator exists BUT an attendee NOT does not exist = redirect to creator enter meeting details page    
+            elif mexists:
+                mci = db.session.query(person.id).filter(person.email == M_email).first()
                 creator_id = mci[0]
                 flash('redirect to creator dashboard page')
+                #redirect to creator dashboard page
                 #return redirect(url_for('CREATOR DASHBOARD PAGE'))
-                #take out line below and use line below
-                return render_template('welcome.html')
-            
-            #if meeting_id does not exist = redirect to new creator page
+                return render_template('welcome.html')           
+            #if email for meeting creator or attendee does not exist and 
             else:
-                flash('redirect to new creator page')
+                #redirect to new creator page
                 return redirect(url_for('newCreator'))
 
         #if get ranking details filled
@@ -501,15 +509,19 @@ def ranking():
 
 @app.route("/editMeetingDetails/", methods = ['GET', 'POST'])
 def editMeetingDetails():
+    # inp = 1: inperson
     mode = db.session.query(meeting_details.in_person).filter(meeting_details.meeting_id == creator_meeting_id).all()
-    inp = mode[0][0]
-    print(inp)
-    if(inp == 1):
-        m = 'in person'
+    m = mode[0][0]
+    if(m == 1):
         inp = 1
+        p = 'in person'
+        op = 0
+        o = 'online'
     else:
-        m = 'online'
         inp = 0
+        p = 'online'
+        op = 1
+        o = 'in person'
 
     desc = db.session.query(meeting_details.description).filter(meeting_details.meeting_id == creator_meeting_id).all()
     d = desc[0][0]
@@ -518,12 +530,14 @@ def editMeetingDetails():
         m_mode = request.form['m_mode']
         descript = request.form['description']
 
-        if(m_mode == 1):
+        if (m_mode == '1'):
+            print("here tf")
             in_person = 1
             online = 0
         else:
             in_person = 0
             online = 1
+
 
         if(descript):
             description = descript
@@ -531,18 +545,26 @@ def editMeetingDetails():
                 {'in_person':in_person, 'online':online, 'description':description, 'creator_id':creator_id})            
             db.session.commit() 
             flash('your meeting details have been updated if you made any changes')
+            flash('click "HOME" in the upper left hand corner to log out')
+
             #return redirect(url_for('CREATOR DASHBOARD')) 
-            return redirect(url_for('home'))        
-        else:
+            #return redirect(url_for('home'))   
+            return redirect(url_for('editMeetingDetails'))      
+        elif (not descript):
             description = d
             db.session.query(meeting_details).filter(meeting_details.meeting_id == creator_meeting_id).update(
                 {'in_person':in_person, 'online':online, 'description':description, 'creator_id':creator_id}) 
             db.session.commit() 
             flash('your meeting details have been updated if you made any changes')
+            flash('click "HOME" in the upper left hand corner to log out')
+
             #return redirect(url_for('CREATOR DASHBOARD')) 
-            return redirect(url_for('home'))
+            #return redirect(url_for('home'))
+            return redirect(url_for('editMeetingDetails'))
+        else:
+            return redirect(url_for('editMeetingDetails'))
         
-    return render_template("editMeetingDetails.html", inp=inp, m=m, d=d)
+    return render_template("editMeetingDetails.html", inp=inp, p=p, op=op, o=o, d=d)
 
 @app.route("/creatorMeeting/", methods = ['GET', 'POST'])
 def creatorMeeting():
