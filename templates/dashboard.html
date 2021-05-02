@@ -1,0 +1,60 @@
+{% extends "layout.html" %}
+{% block title %}
+myMEETR
+{% endblock %}
+{% block content %}
+<p>Enter Meeting details:</p>
+<form action = "{{ request.path }}" method = "post">
+
+    <label for = "meeting_chosen">Choose a meeting to edit or create a new meeting</label>
+    <select name="meeting_chosen">
+        {% for item in data2 %}
+            <option value="{{ item[0] }}">{{ item[0] }}</option>
+        {% endfor %}
+        <option value='new_meeting'> Create a new meeting</option>
+
+    </select>
+
+
+    <h2>Your Meetings</h2>
+    <style>
+        table, th, td {
+            border: 1px solid black;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 15px;
+        }
+    </style>
+    <table style="width:100%">
+        <tr>
+            <th>Meeting ID</th>
+            <th>Start day</th> 
+            <th>End day</th>
+            <th>Length</th>
+            <th>Description</th>
+        </tr>
+        {% for item in data %}
+        <tr>
+            <td>{{item[0]}}</td>
+            <td>{{item[1]}}</td>
+            <td>{{item[2]}}</td>
+            <td>{{item[3]}}</td>
+            <td>{{item[4]}}</td>
+        </tr>
+        {% endfor %}
+    </table>
+
+
+    <input type = "submit" value = "Submit" /><br>
+
+
+
+    
+
+    
+{% for message in get_flashed_messages() %}
+<p>{{ message }}</p>
+{% endfor %}
+
+{% endblock %}
