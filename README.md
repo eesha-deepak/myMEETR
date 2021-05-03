@@ -3,8 +3,3 @@ A web application that helps companies to organize meeting times, according to c
 
 To connect to mySQL and test the code, create a python file called 'config.py' to house all of your passwords and credentials.
 
-Note: If mySQLDB's module does not work for your system, copy paste the following lines into env/lib/python3.9/site-packages/click/init.py
-
-import pymysql
-
-pymysql.install_as_MySQLdb()
