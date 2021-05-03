@@ -238,16 +238,51 @@ def newCreator():
 
 @app.route("/availability/", methods = ['GET', 'POST'])
 def availability():
-    get_flashed_messages()
+    # variable for error messages
+    message = ""
+
+    # code to check if the person already has their info in attendee_info
+    a_exists = False
+    a_role = ""
+    cnx2 = mysql.connector.connect(user=config.user, password=config.password, host=config.host, database=config.db)
+    cursor2 = cnx2.cursor(prepared=True)
+    query2 = """
+             select meeting_role
+             from attendee_info, person
+             where person.email = %s
+             and attendee_info.person_id = person.person_id
+             and attendee_info.meeting_id = %s;"""
+    cursor2.execute(query2, (A_email, meeting_id, ))
+    data2 = cursor2.fetchall()
+    cursor2.close()
+    cnx2.close()
+                        
+    if len(data2)!=0:
+        a_exists = True
+        a_role = data2[0][0]
+
     if request.method == 'POST':
+        if request.form['submit_button'] == 'Go Home': 
+            return redirect(url_for('home')) 
+
         # check to make sure all the values were filled
-        if not request.form['start_time'] or not request.form['end_time'] or not request.form['importance_name'] or not request.form['year'] or not request.form['month'] or not request.form['date']:
-            flash('Did not fill in all of the form items')
-        else:
+        not_filled = False
+
+        if request.form['submit_button'] == 'Add Availability':
+            if a_exists == True:
+                if not request.form['start_time'] or not request.form['end_time'] or not request.form['year'] or not request.form['month'] or not request.form['date']:
+                    not_filled = True
+                    message = "Did not fill in all of the form items"
+            if a_exists == False:
+                if not request.form['start_time'] or not request.form['end_time'] or not request.form['importance_name'] or not request.form['year'] or not request.form['month'] or not request.form['date']:
+                    not_filled = True
+                    message = "Did not fill in all of the form items"
+        
+        if not_filled == False:   
             # do all my error checky checks
 
             # first get all the values 
-            a_role = request.form['importance_name']
+            at_role = request.form.get('importance_name','')
 
             date = int(request.form['date'])
             year = request.form['year']
@@ -322,7 +357,7 @@ def availability():
 
             # not on the same day
             if sprev != eprev or snext != enext:
-                flash('Times are not on the same day')
+                message = "Times are not on the same day"
 
             else:
                 # get the dates and the time_block for the meeting
@@ -385,7 +420,7 @@ def availability():
 
                     # number of hours and minutes is wrong compared to the one provided from the meeting
                     if delta_time != time_block:
-                        flash('Time chosen for the meeting is not the correct length')
+                        message = "Time chosen for the meeting is not the correct length"
 
                     else:
                         # now we finally know that the data is CORRECT!
@@ -430,27 +465,16 @@ def availability():
                             db.session.add(lm)
                             db.session.commit()
                         
-                        cnx6 = mysql.connector.connect(user=config.user, password=config.password, host=config.host, database=config.db)
-                        cursor6 = cnx6.cursor(prepared=True)
-                        query6 = """
-                                select *
-                                from attendee_info
-                                where attendee_info.person_id = %s
-                                and attendee_info.meeting_id = %s;"""
-                        cursor6.execute(query6, (attendee_id, meeting_id, ))
-                        data6 = cursor6.fetchall()
-                        cursor6.close()
-                        cnx6.close()
-                        
-                        if len(data6)==0:
-                            ai = attendee_info(attendee_id, meeting_id, a_role)
+                        if a_exists == False:
+                            ai = attendee_info(attendee_id, meeting_id, at_role)
                             db.session.add(ai)
                             db.session.commit()
+                        
+                        message = "Time successfully added!"
                 else:
-                    flash('Date chosen is not in between the start and end days for the meeting')
+                    message = "Date chosen is not in between the start and end days for the meeting"
 
-    flash('Time successfully added!')    
-    return render_template("availability.html", implevels = importance.query.all())
+    return render_template("availability.html", implevels = importance.query.all(), at_exists = a_exists, role = a_role, message = message)
 
 @app.route("/ranking/")
 def ranking():
