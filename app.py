@@ -418,7 +418,7 @@ def availability():
                     d_min_to_hour = dminutes/60
                     delta_time = dhour + d_min_to_hour
 
-                    # number of hours and minutes is wrong compared to the one provided from the meeting
+                    # number of hours and minutes is wrong compared to the time block given from the meeting
                     if delta_time != time_block:
                         message = "Time chosen for the meeting is not the correct length"
 
