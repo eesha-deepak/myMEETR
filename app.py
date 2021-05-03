@@ -122,6 +122,8 @@ def home():
         global R_meeting_id
         R_meeting_id = request.form['R_meeting_id']
 
+        global creator_id
+
         #attendee details entered
         if meeting_id and A_email and not M_email and not R_meeting_id:
             #check if attendee email exists
@@ -161,7 +163,7 @@ def home():
 
             pexists = db.session.query(db.exists().where(person.email == M_email)).scalar()
 
-            global creator_id
+            #global creator_id
 
             #if email for meeting creator doesn't exist BUT an attendee does exist = redirect to creator enter meeting details page
             if (not mexists and pexists):
