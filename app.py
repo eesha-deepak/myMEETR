@@ -538,9 +538,9 @@ def editMeetingDetails():
             flash('your meeting details have been updated if you made any changes')
             flash('click "HOME" in the upper left hand corner to log out')
 
-            return redirect(url_for('dashboard')) 
+            #return redirect(url_for('dashboard')) 
             #return redirect(url_for('home'))   
-            #return redirect(url_for('editMeetingDetails'))      
+            return redirect(url_for('editMeetingDetails'))      
         elif (not descript):
             description = d
             db.session.query(meeting_details).filter(meeting_details.meeting_id == creator_meeting_id).update(
@@ -549,9 +549,9 @@ def editMeetingDetails():
             flash('your meeting details have been updated if you made any changes')
             flash('click "HOME" in the upper left hand corner to log out')
 
-            return redirect(url_for('dashboard')) 
+            #return redirect(url_for('dashboard')) 
             #return redirect(url_for('home'))
-            #return redirect(url_for('editMeetingDetails'))
+            return redirect(url_for('editMeetingDetails'))
         else:
             return redirect(url_for('editMeetingDetails'))
         
