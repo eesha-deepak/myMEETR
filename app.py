@@ -9,6 +9,7 @@ import re
 import sqlalchemy
 from sqlalchemy import join
 from sqlalchemy.sql import select
+from sqlalchemy import select
 from sqlalchemy import Table, Column, Float, Integer, String, MetaData, ForeignKey, Numeric, SmallInteger, DATE
 from flask import get_flashed_messages
 import math
@@ -245,6 +246,7 @@ def availability():
 
     # code to check if the person already has their info in attendee_info
     a_exists = False
+    enter_info = True
     a_role = ""
     cnx2 = mysql.connector.connect(user=config.user, password=config.password, host=config.host, database=config.db)
     cursor2 = cnx2.cursor(prepared=True)
@@ -261,7 +263,29 @@ def availability():
                         
     if len(data2)!=0:
         a_exists = True
+        enter_info = False
         a_role = data2[0][0]
+    
+    # code to check if the person is the meeting creator
+    mc_exists = False
+    cnx7 = mysql.connector.connect(user=config.user, password=config.password, host=config.host, database=config.db)
+    cursor7 = cnx7.cursor(prepared=True)
+    query7 = """
+             select * 
+             from person, meeting_details 
+             where person.email = %s 
+             and meeting_details.meeting_id = %s 
+             and person.person_id = meeting_details.creator_id"""
+    cursor7.execute(query7, (A_email, meeting_id, ))
+    data7 = cursor7.fetchall()
+    cursor7.close()
+    cnx7.close()
+
+    if len(data7)!=0:
+        mc_exists = True
+        a_exists = True
+        print("made it here")
+        a_role = "Coordinator"
 
     if request.method == 'POST':
         if request.form['submit_button'] == 'Done Entering Times': 
@@ -467,8 +491,12 @@ def availability():
                             db.session.add(lm)
                             db.session.commit()
                         
-                        if a_exists == False:
-                            ai = attendee_info(attendee_id, meeting_id, at_role)
+                        if enter_info == True:
+                            ai = 0
+                            if mc_exists == True:
+                                ai = attendee_info(attendee_id, meeting_id, a_role)
+                            else:
+                                ai = attendee_info(attendee_id, meeting_id, at_role)
                             db.session.add(ai)
                             db.session.commit()
                         
@@ -476,7 +504,20 @@ def availability():
                 else:
                     message = "Date chosen is not in between the start and end days for the meeting"
 
-    return render_template("availability.html", implevels = importance.query.all(), at_exists = a_exists, role = a_role, message = message)
+    # make sure to not offer the role of coordinator
+    cnx6 = mysql.connector.connect(user=config.user, password=config.password, host=config.host, database=config.db)
+    cursor6 = cnx6.cursor(prepared=True)
+    query6 = """
+             select meeting_role from importance where importance_level != 1;"""
+    result = cursor6.execute(query6)
+    data6 = cursor6.fetchall()
+    cursor6.close()
+    cnx6.close()
+    levels = []
+    for curr in data6:
+        levels.append(curr[0])
+    
+    return render_template("availability.html", implevels = levels, at_exists = a_exists, role = a_role, message = message)
 
 @app.route("/ranking/")
 def ranking():
