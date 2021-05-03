@@ -101,8 +101,6 @@ class meeting_details(db.Model):
         self.description = description
         self.creator_id = creator_id
 
-
-
 if __name__ == '__main__':
     #To create/use the database mentioned in the URI
    db.create_all()
