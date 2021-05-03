@@ -448,7 +448,8 @@ def availability():
                             db.session.commit()
                 else:
                     flash('Date chosen is not in between the start and end days for the meeting')
-         
+
+    flash('Time successfully added!')    
     return render_template("availability.html", implevels = importance.query.all())
 
 @app.route("/ranking/")
