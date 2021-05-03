@@ -5,7 +5,7 @@ myMEETR
 {% block content %}
 <p>Enter available times in Military Time (ex: 23:30 for 11:30 PM)</p>
 <p> Make sure to enter times in your time zone!</p>
-<p> Once done entering, click the home button at the top of the page!</p>
+
 <form action = "{{ request.path }}" method = "post">
     <label for = "start_time">Start Time</label>
     <input type = "text" name = "start_time"/><br>
@@ -73,23 +73,23 @@ myMEETR
         <option value='30'>30</option>
         <option value='31'>31</option>
     </select><br>
-    <label for="importance_name">Meeting Role</label>
-    <select name="importance_name">
+    <label for="importance_name">Meeting Role:</label>
+    {% if at_exists %}
+        <label>{{role}}</label>
+    {% else %}
+        <select name="importance_name">
         {% for impl in implevels %}
             <option value="{{ impl.role }}">{{ impl.role }}</option>
         {% endfor %}
-    </select>
+        </select>
+    {% endif %}
     <br><br>
-    <input type = "submit" value = "Add Availability" /><br>
 
-    {% with messages = get_flashed_messages() %}
-        {% if messages %}
-            <ul class=flashes>
-            {% for message in messages %}
-                <li>{{ message }}</li>
-            {% endfor %}
-            </ul>
-        {% endif %}
-    {% endwith %}
+    <input type = "submit" name="submit_button" value = "Add Availability" /><br>
+    <input type = "submit" name="submit_button" value="Go Home" /><br>
+
+    {% if message %}
+        <p>{{ message }}</p>
+    {% endif %}
 
 {% endblock %}
