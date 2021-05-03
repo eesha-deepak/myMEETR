@@ -621,7 +621,7 @@ def dashboard():
 @app.route("/creatorMeeting/", methods = ['GET', 'POST'])
 def creatorMeeting():
     if request.method == 'POST':
-        print(creator_id)
+        #print(creator_id)
         start = request.form['start_day']
         end = request.form['end_day']
         start_day = datetime.datetime.strptime(start, '%Y-%m-%d')
