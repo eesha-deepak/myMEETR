@@ -10,9 +10,9 @@ import sqlalchemy
 from sqlalchemy import join
 from sqlalchemy.sql import select
 from sqlalchemy import Table, Column, Float, Integer, String, MetaData, ForeignKey, Numeric, SmallInteger, DATE
+from flask import get_flashed_messages
 import math
 import decimal
-import datetime
 from dateutil.parser import parse
 import config #stores passwords and database credentials
 
@@ -240,10 +240,11 @@ def newCreator():
 
 @app.route("/availability/", methods = ['GET', 'POST'])
 def availability():
+    get_flashed_messages()
     if request.method == 'POST':
         # check to make sure all the values were filled
         if not request.form['start_time'] or not request.form['end_time'] or not request.form['importance_name'] or not request.form['year'] or not request.form['month'] or not request.form['date']:
-            return render_template('availability.html', implevels = importance.query.all())
+            flash('Did not fill in all of the form items')
         else:
             # do all my error checky checks
 
@@ -323,133 +324,132 @@ def availability():
 
             # not on the same day
             if sprev != eprev or snext != enext:
-                return render_template('availability.html', implevels = importance.query.all())
-            
-            # get the dates and the time_block for the meeting
-            cnx3 = mysql.connector.connect(user=config.user, password=config.password, host=config.host, database=config.db)
-            cursor3 = cnx3.cursor(prepared=True)
-            query3 = """
-                    select start_day, end_day, length_hr
-                    from meeting_details
-                    where meeting_details.meeting_id = %s;"""
-            cursor3.execute(query3, (meeting_id, ))
-            data3 = cursor3.fetchall()
-            cursor3.close()
-            cnx3.close()
+                flash('Times are not on the same day')
 
-            # make all of these datetime.datetime
-            first_day = datetime.datetime.combine(data3[0][0], datetime.time(0, 0))
-            last_day = datetime.datetime.combine(data3[0][1], datetime.time(0, 0))
-            time_block = decimal.Decimal(data3[0][2])
-
-            # increment the date based on what we calculated in the hours and minutes section
-            if sprev == True:
-                date = date - 1
-            elif snext == True:
-                date = date + 1
-
-            full_date = year + "-" + month + "-" + str(date)
-            date_obj = datetime.datetime.strptime(full_date, '%Y-%m-%d')
-
-            # check if it is between the right days/months/years
-            if first_day <= date_obj <= last_day:
-                print("")
             else:
-                return render_template('availability.html', implevels = importance.query.all())
-            
-            start_time = ""
-            end_time = ""
+                # get the dates and the time_block for the meeting
+                cnx3 = mysql.connector.connect(user=config.user, password=config.password, host=config.host, database=config.db)
+                cursor3 = cnx3.cursor(prepared=True)
+                query3 = """
+                        select start_day, end_day, length_hr
+                        from meeting_details
+                        where meeting_details.meeting_id = %s;"""
+                cursor3.execute(query3, (meeting_id, ))
+                data3 = cursor3.fetchall()
+                cursor3.close()
+                cnx3.close()
 
-            # get the right time printed out in the correct format
-            s_string = str(sminutes) 
-            length = len(s_string) 
-            if length == 1:
-                start_time = str(int(shour)) + ":0" + str(int(sminutes)) + ":00"
-            elif sminutes == 0:
-                start_time = str(int(shour)) + ":00:00"
-            else:
-                start_time = str(int(shour)) + ":" + str(int(sminutes)) + ":00"
+                # make all of these datetime.datetime
+                first_day = datetime.datetime.combine(data3[0][0], datetime.time(0, 0))
+                last_day = datetime.datetime.combine(data3[0][1], datetime.time(0, 0))
+                time_block = decimal.Decimal(data3[0][2])
 
-            e_string = str(eminutes) 
-            length = len(e_string) 
-            if length == 1:
-                end_time = str(int(ehour)) + ":0" + str(int(eminutes)) + ":00"
-            elif eminutes == 0:
-                end_time = str(int(ehour)) + ":00:00"
-            else:
-                end_time = str(int(ehour)) + ":" + str(int(eminutes)) + ":00"
-            
-            FMT = '%H:%M:%S'
-            tdelta = datetime.datetime.strptime(end_time, FMT) - datetime.datetime.strptime(start_time, FMT)
-            dhour = int(str(tdelta).split(':')[0])
-            dminutes = int(str(tdelta).split(':')[1])
+                # increment the date based on what we calculated in the hours and minutes section
+                if sprev == True:
+                    date = date - 1
+                elif snext == True:
+                    date = date + 1
 
-            d_min_to_hour = dminutes/60
-            delta_time = dhour + d_min_to_hour
+                full_date = year + "-" + month + "-" + str(date)
+                date_obj = datetime.datetime.strptime(full_date, '%Y-%m-%d')
 
-            # number of hours and minutes is wrong compared to the one provided from the meeting
-            if delta_time != time_block:
-                return render_template('availability.html', implevels = importance.query.all())
-            
+                # check if it is between the right days/months/years
+                if first_day <= date_obj <= last_day:
+                    start_time = ""
+                    end_time = ""
 
-            # now we finally know that the data is CORRECT!
-            cnx4 = mysql.connector.connect(user=config.user, password=config.password, host=config.host, database=config.db)
-            cursor4 = cnx4.cursor(prepared=True)
-            query4 = """
-                    select availability_id
-                    from availability_info
-                    where availability_info.date = %s
-                    and availability_info.start_time = %s
-                    and availability_info.end_time = %s;"""
-            cursor4.execute(query4, (full_date, start_time, end_time, ))
-            data4 = cursor4.fetchall()
-            cursor4.close()
-            cnx4.close()
+                    # get the right time printed out in the correct format
+                    s_string = str(sminutes) 
+                    length = len(s_string) 
+                    if length == 1:
+                        start_time = str(int(shour)) + ":0" + str(int(sminutes)) + ":00"
+                    elif sminutes == 0:
+                        start_time = str(int(shour)) + ":00:00"
+                    else:
+                        start_time = str(int(shour)) + ":" + str(int(sminutes)) + ":00"
 
-            av_id = 0
-            
-            if len(data4)==0:
-                ai = availability_info(full_date, start_time, end_time)
-                db.session.add(ai)
-                db.session.commit()
-                av_id = ai.id
-            else:
-                av_id = data4[0][0]
+                    e_string = str(eminutes) 
+                    length = len(e_string) 
+                    if length == 1:
+                        end_time = str(int(ehour)) + ":0" + str(int(eminutes)) + ":00"
+                    elif eminutes == 0:
+                        end_time = str(int(ehour)) + ":00:00"
+                    else:
+                        end_time = str(int(ehour)) + ":" + str(int(eminutes)) + ":00"
+                    
+                    FMT = '%H:%M:%S'
+                    tdelta = datetime.datetime.strptime(end_time, FMT) - datetime.datetime.strptime(start_time, FMT)
+                    dhour = int(str(tdelta).split(':')[0])
+                    dminutes = int(str(tdelta).split(':')[1])
 
-            cnx5 = mysql.connector.connect(user=config.user, password=config.password, host=config.host, database=config.db)
-            cursor5 = cnx5.cursor(prepared=True)
-            query5 = """
-                    select *
-                    from link_meeting
-                    where link_meeting.availability_id = %s
-                    and link_meeting.person_id = %s
-                    and link_meeting.meeting_id = %s;"""
-            cursor5.execute(query5, (av_id, attendee_id, meeting_id, ))
-            data5 = cursor5.fetchall()
-            cursor5.close()
-            cnx5.close()
-            
-            if len(data5)==0:
-                lm = link_meeting(av_id, attendee_id, meeting_id)
-                db.session.add(lm)
-                db.session.commit()
-            
-            cnx6 = mysql.connector.connect(user=config.user, password=config.password, host=config.host, database=config.db)
-            cursor6 = cnx6.cursor(prepared=True)
-            query6 = """
-                    select *
-                    from attendee_info
-                    where attendee_info.person_id = %s
-                    and attendee_info.meeting_id = %s;"""
-            cursor6.execute(query6, (attendee_id, meeting_id, ))
-            data6 = cursor6.fetchall()
-            cursor6.close()
-            cnx6.close()
-            
-            if len(data6)==0:
-                ai = attendee_info(attendee_id, meeting_id, a_role)
-                db.session.add(ai)
-                db.session.commit()
+                    d_min_to_hour = dminutes/60
+                    delta_time = dhour + d_min_to_hour
+
+                    # number of hours and minutes is wrong compared to the one provided from the meeting
+                    if delta_time != time_block:
+                        flash('Time chosen for the meeting is not the correct length')
+
+                    else:
+                        # now we finally know that the data is CORRECT!
+                        cnx4 = mysql.connector.connect(user=config.user, password=config.password, host=config.host, database=config.db)
+                        cursor4 = cnx4.cursor(prepared=True)
+                        query4 = """
+                                select availability_id
+                                from availability_info
+                                where availability_info.date = %s
+                                and availability_info.start_time = %s
+                                and availability_info.end_time = %s;"""
+                        cursor4.execute(query4, (full_date, start_time, end_time, ))
+                        data4 = cursor4.fetchall()
+                        cursor4.close()
+                        cnx4.close()
+
+                        av_id = 0
+                        
+                        if len(data4)==0:
+                            ai = availability_info(full_date, start_time, end_time)
+                            db.session.add(ai)
+                            db.session.commit()
+                            av_id = ai.id
+                        else:
+                            av_id = data4[0][0]
+
+                        cnx5 = mysql.connector.connect(user=config.user, password=config.password, host=config.host, database=config.db)
+                        cursor5 = cnx5.cursor(prepared=True)
+                        query5 = """
+                                select *
+                                from link_meeting
+                                where link_meeting.availability_id = %s
+                                and link_meeting.person_id = %s
+                                and link_meeting.meeting_id = %s;"""
+                        cursor5.execute(query5, (av_id, attendee_id, meeting_id, ))
+                        data5 = cursor5.fetchall()
+                        cursor5.close()
+                        cnx5.close()
+                        
+                        if len(data5)==0:
+                            lm = link_meeting(av_id, attendee_id, meeting_id)
+                            db.session.add(lm)
+                            db.session.commit()
+                        
+                        cnx6 = mysql.connector.connect(user=config.user, password=config.password, host=config.host, database=config.db)
+                        cursor6 = cnx6.cursor(prepared=True)
+                        query6 = """
+                                select *
+                                from attendee_info
+                                where attendee_info.person_id = %s
+                                and attendee_info.meeting_id = %s;"""
+                        cursor6.execute(query6, (attendee_id, meeting_id, ))
+                        data6 = cursor6.fetchall()
+                        cursor6.close()
+                        cnx6.close()
+                        
+                        if len(data6)==0:
+                            ai = attendee_info(attendee_id, meeting_id, a_role)
+                            db.session.add(ai)
+                            db.session.commit()
+                else:
+                    flash('Date chosen is not in between the start and end days for the meeting')
          
     return render_template("availability.html", implevels = importance.query.all())
 
