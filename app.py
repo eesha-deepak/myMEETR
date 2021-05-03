@@ -220,7 +220,7 @@ def newAttendee():
             db.session.commit()
          
             flash('Record was successfully added')
-            
+            return redirect(url_for('availability'))
     return render_template("newAttendee.html", tzones = time_zone.query.all())
 
 @app.route("/newCreator/", methods = ['GET', 'POST'])
@@ -235,8 +235,7 @@ def newCreator():
             db.session.commit()
          
             flash('Record was successfully added')
-            #return redirect(url_for('show_all'))
-   
+            return redirect(url_for('creatorMeeting'))
     return render_template("newCreator.html", tzones = time_zone.query.all())
 
 @app.route("/availability/", methods = ['GET', 'POST'])
