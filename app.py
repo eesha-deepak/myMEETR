@@ -262,7 +262,7 @@ def availability():
         a_role = data2[0][0]
 
     if request.method == 'POST':
-        if request.form['submit_button'] == 'Go Home': 
+        if request.form['submit_button'] == 'Done Entering Times': 
             return redirect(url_for('home')) 
 
         # check to make sure all the values were filled
