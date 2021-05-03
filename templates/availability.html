@@ -79,7 +79,7 @@ myMEETR
     {% else %}
         <select name="importance_name">
         {% for impl in implevels %}
-            <option value="{{ impl.role }}">{{ impl.role }}</option>
+            <option value="{{ impl }}">{{ impl }}</option>
         {% endfor %}
         </select>
     {% endif %}
