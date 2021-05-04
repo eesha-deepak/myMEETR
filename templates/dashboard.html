@@ -15,6 +15,11 @@ myMEETR
 
     </select>
 
+    <label for="modify">Edit or delete meeting</label>
+    <select name="modify" value=''>Choose an option</option>
+        <option value=1>Edit</option>
+        <option value=0>Delete</option>
+    </select><br>
 
     <h2>Your Meetings</h2>
     <style>
@@ -45,10 +50,7 @@ myMEETR
         {% endfor %}
     </table>
 
-
     <input type = "submit" value = "Submit" /><br>
-
-
 
     
 
