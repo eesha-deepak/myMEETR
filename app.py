@@ -123,7 +123,8 @@ def home():
         global R_meeting_id
         R_meeting_id = request.form['R_meeting_id']
 
-        global creator_id
+        global w_creator_id
+        w_creator_id = -1
 
         #attendee details entered
         if meeting_id and A_email and not M_email and not R_meeting_id:
@@ -169,18 +170,20 @@ def home():
             #if email for meeting creator doesn't exist BUT an attendee does exist = redirect to creator enter meeting details page
             if (not mexists and pexists):
                 mci = db.session.query(person.id).filter(person.email == M_email).first()
-                creator_id = mci[0]
+                w_creator_id = mci[0]
                 #redirect to creator new meeting page
                 return redirect(url_for('creatorMeeting'))
             #if email for meeting creator exists BUT an attendee NOT does not exist = redirect to creator enter meeting details page    
             elif mexists:
                 mci = db.session.query(person.id).filter(person.email == M_email).first()
-                creator_id = mci[0]
+                w_creator_id = mci[0]
                 #redirect to creator dashboard page
                 return redirect(url_for('dashboard'))         
             #if email for meeting creator or attendee does not exist and 
             else:
                 #redirect to new creator page
+                #mci = db.session.query(person.id).filter(person.email == M_email).first()
+                #creator_id = mci[0]
                 return redirect(url_for('newCreator'))
 
         #if get ranking details filled
@@ -234,6 +237,9 @@ def newCreator():
         
             db.session.add(pers)
             db.session.commit()
+
+            w_creator_id = pers.id
+            #print(w_creator_id)
          
             flash('Record was successfully added')
             return redirect(url_for('creatorMeeting'))
@@ -331,6 +337,9 @@ def availability():
 
             # get the person's id and the time_zone offset
             cnx = mysql.connector.connect(user=config.user, password=config.password, host=config.host, database=config.db)
+            cnx.start_transaction(consistent_snapshot=bool,
+                      isolation_level='READ COMMITTED',
+                      readonly=True)
             cursor = cnx.cursor(prepared=True)
             query = """
                     select person.person_id, time_zone.offset
@@ -506,6 +515,9 @@ def availability():
 
     # make sure to not offer the role of coordinator
     cnx6 = mysql.connector.connect(user=config.user, password=config.password, host=config.host, database=config.db)
+    cnx6.start_transaction(consistent_snapshot=bool,
+                      isolation_level='SERIALIZABLE',
+                      readonly=True)
     cursor6 = cnx6.cursor(prepared=True)
     query6 = """
              select meeting_role from importance where importance_level != 1;"""
@@ -548,7 +560,7 @@ def ranking():
                 (select availability_id, sum(importance_level = 1) as level_1, sum(importance_level = 2) as level_2, sum(importance_level = 3) as level_3, sum(importance_level = 4) as level_4, sum(importance_level = 5) as level_5, date, start_time, end_time
                 from 
                     (select link_meeting.meeting_id, link_meeting.availability_id, person.person_id, importance.importance_level, date, start_time, end_time
-                    from availability_info, person, link_meeting, importance, attendee_info
+                    from availability_info, link_meeting, importance, attendee_info, person
                     where link_meeting.person_id = person.person_id 
                     and link_meeting.availability_id = availability_info.availability_id 
                     and link_meeting.person_id = attendee_info.person_id 
@@ -599,70 +611,119 @@ def editMeetingDetails():
         if(descript):
             description = descript
             db.session.query(meeting_details).filter(meeting_details.meeting_id == creator_meeting_id).update(
-                {'in_person':in_person, 'online':online, 'description':description, 'creator_id':creator_id})            
+                {'in_person':in_person, 'online':online, 'description':description, 'creator_id':w_creator_id})            
             db.session.commit() 
             flash('your meeting details have been updated if you made any changes')
-            flash('click "HOME" in the upper left hand corner to log out')
+            #flash('click "HOME" in the upper left hand corner to log out')
 
-            #return redirect(url_for('dashboard')) 
+            return redirect(url_for('dashboard')) 
             #return redirect(url_for('home'))   
-            return redirect(url_for('editMeetingDetails'))      
+            #return redirect(url_for('editMeetingDetails'))      
         elif (not descript):
             description = d
             db.session.query(meeting_details).filter(meeting_details.meeting_id == creator_meeting_id).update(
-                {'in_person':in_person, 'online':online, 'description':description, 'creator_id':creator_id}) 
+                {'in_person':in_person, 'online':online, 'description':description, 'creator_id':w_creator_id}) 
             db.session.commit() 
             flash('your meeting details have been updated if you made any changes')
-            flash('click "HOME" in the upper left hand corner to log out')
+            #flash('click "HOME" in the upper left hand corner to log out')
 
-            #return redirect(url_for('dashboard')) 
+            return redirect(url_for('dashboard')) 
             #return redirect(url_for('home'))
-            return redirect(url_for('editMeetingDetails'))
+            #return redirect(url_for('editMeetingDetails'))
         else:
-            return redirect(url_for('editMeetingDetails'))
+            return redirect(url_for('dashboard'))
         
     return render_template("editMeetingDetails.html", inp=inp, p=p, op=op, o=o, d=d)
 
 
 @app.route("/dashboard/", methods = ['GET', 'POST'])
 def dashboard():
+    # query based on the email that we get at the very beginning
+    cnx9 = mysql.connector.connect(user=config.user, password=config.password, host=config.host, database=config.db)
+    cursor9 = cnx9.cursor(prepared=True)
+    query9 = """
+            select person_id 
+            from meeting_details, person 
+            where person.email = %s 
+            and person.person_id = meeting_details.creator_id;
+            """
+    cursor9.execute(query9, (M_email,))
+    data9 = cursor9.fetchall()
+    cursor9.close()
+    cnx9.close()
+    w_creator_id = data9[0][0]
+    #print(w_creator_id)
+
     cnx7 = mysql.connector.connect(user=config.user, password=config.password, host=config.host, database=config.db)
     cursor7 = cnx7.cursor(prepared=True)
     query7 = """
-            select meeting_id, start_day, end_day, length_hr, description from meeting_details where creator_id = %s;
+            select meeting_id, start_day, end_day, length_hr, description
+            from meeting_details 
+            where creator_id = %s;
             """
-    cursor7.execute(query7, (creator_id,))
+    cursor7.execute(query7, (w_creator_id,))
     data7 = cursor7.fetchall()
     cursor7.close()
     cnx7.close()
+    #print(data7)
 
     cnx8 = mysql.connector.connect(user=config.user, password=config.password, host=config.host, database=config.db)
     cursor8 = cnx8.cursor(prepared=True)
     query8 = """
             select meeting_id from meeting_details where creator_id = %s;
             """
-    cursor8.execute(query8, (creator_id,))
+    cursor8.execute(query8, (w_creator_id,))
     data8 = cursor8.fetchall()
     cursor8.close()
     cnx8.close()
 
     if request.method == 'POST':
-        print("in post")
+        #print("in post")
 
         meeting_chosen = request.form['meeting_chosen']
+        modify = request.form['modify']
         if meeting_chosen == "new_meeting":
-            return redirect(url_for('creatorMeeting'))
-        else:
+            #return redirect(url_for('creatorMeeting'))
+            return redirect(url_for('creatorMeeting', w_creator_id=w_creator_id))
+        elif modify == '1':
             global creator_meeting_id
             creator_meeting_id = int(request.form['meeting_chosen'])
             return redirect(url_for('editMeetingDetails'))
+        elif modify == '0':
+            cnx = mysql.connector.connect(user=config.user, password=config.password, host=config.host, database=config.db)
+            cursor = cnx.cursor()
+            query = """
+                    delete from meeting_details where meeting_id = %s;
+                    """
+            cursor.execute(query, (meeting_chosen, ))
+            cursor.close()
+            cnx.commit()
+            cnx.close()
+            flash("meeting deleted")
+            return redirect(url_for('home'))
 
     return render_template('dashboard.html', data=data7, data2=data8)
 
-@app.route("/creatorMeeting/", methods = ['GET', 'POST'])
-def creatorMeeting():
+@app.route("/creatorMeeting/<w_creator_id>", methods = ['GET', 'POST'])
+def creatorMeeting(w_creator_id):
+    # query the person table to get the last row
+    if w_creator_id:
+        print("")
+    else:
+        cnx9 = mysql.connector.connect(user=config.user, password=config.password, host=config.host, database=config.db)
+        cursor9 = cnx9.cursor(prepared=True)
+        query9 = """
+                select person_id from person order by person_id desc LIMIT 1;
+                """
+        cursor9.execute(query9)
+        data9 = cursor9.fetchall()
+        cursor9.close()
+        cnx9.close()
+        w_creator_id = data9[0][0]
+    #print(w_creator_id)
+
     if request.method == 'POST':
-        #print(creator_id)
+        #print(w_creator_id)
         start = request.form['start_day']
         end = request.form['end_day']
         start_day = datetime.datetime.strptime(start, '%Y-%m-%d')
@@ -688,7 +749,7 @@ def creatorMeeting():
            flash('Please enter correct dates','error')
 
         elif request.form['inperson-online'] and request.form['length'] and request.form['meeting_description'] and request.form['start_day'] and request.form['end_day']:
-            newMeeting = meeting_details(inperson, online, start_day, end_day, request.form['length'], request.form['meeting_description'], creator_id)
+            newMeeting = meeting_details(inperson, online, start_day, end_day, request.form['length'], request.form['meeting_description'], w_creator_id)
             db.session.add(newMeeting)
             db.session.commit()
             flash('Record was successfully added')
