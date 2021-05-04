@@ -172,7 +172,7 @@ def home():
                 mci = db.session.query(person.id).filter(person.email == M_email).first()
                 w_creator_id = mci[0]
                 #redirect to creator new meeting page
-                return redirect(url_for('creatorMeeting'))
+                return redirect(url_for('creatorMeeting', w_creator_id=w_creator_id))
             #if email for meeting creator exists BUT an attendee NOT does not exist = redirect to creator enter meeting details page    
             elif mexists:
                 mci = db.session.query(person.id).filter(person.email == M_email).first()
@@ -242,7 +242,7 @@ def newCreator():
             #print(w_creator_id)
          
             flash('Record was successfully added')
-            return redirect(url_for('creatorMeeting'))
+            return redirect(url_for('creatorMeeting', w_creator_id=w_creator_id))
     return render_template("newCreator.html", tzones = time_zone.query.all())
 
 @app.route("/availability/", methods = ['GET', 'POST'])
