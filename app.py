@@ -515,9 +515,6 @@ def availability():
 
     # make sure to not offer the role of coordinator
     cnx6 = mysql.connector.connect(user=config.user, password=config.password, host=config.host, database=config.db)
-    cnx6.start_transaction(consistent_snapshot=bool,
-                      isolation_level='SERIALIZABLE',
-                      readonly=True)
     cursor6 = cnx6.cursor(prepared=True)
     query6 = """
              select meeting_role from importance where importance_level != 1;"""
@@ -552,6 +549,9 @@ def ranking():
     cnx.close()
 
     cnx2 = mysql.connector.connect(user=config.user, password=config.password, host=config.host, database=config.db)
+    cnx2.start_transaction(consistent_snapshot=bool,
+                      isolation_level='SERIALIZABLE',
+                      readonly=True)
     cursor2 = cnx2.cursor(prepared=True)
     try:
         query2 = """
