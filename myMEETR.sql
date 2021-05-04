@@ -25,7 +25,9 @@ INSERT INTO `person` (`person_id`, `first_name`, `last_name`, `time_zone_name`, 
 (3, 'Xavier', 'Cunningham', 'JST', 'xcunningham@purdue.edu'),
 (4, 'Bernard', 'Stevenson', 'IST', 'bstevenson@purdue.edu'),
 (5, 'Jolie', 'Baker', 'CDT', 'jbaker@purdue.edu'),
-(6, 'Christie', 'Tate', 'CST', 'ctate@purdue.edu');
+(6, 'Christie', 'Tate', 'CST', 'ctate@purdue.edu'),
+(7, 'Mandy', 'Teagan', 'CST', 'mteagan@purdue.edu'),
+(8, 'Indiana', 'Parth', 'EDT', 'iparth@purdue.edu');
 
 -- --------------------------------------------------------
 
@@ -105,10 +107,10 @@ CREATE TABLE IF NOT EXISTS `meeting_details` (
 --
 
 INSERT INTO `meeting_details` (`meeting_id`, `in_person`, `online`, `start_day`, `end_day`, `length_hr`, `description`, `creator_id`) VALUES
-(1, 0, 1, '2021-04-20', '2021-04-25', 2, "Pitching project", 1),
-(2, 0, 1, '2021-03-24', '2021-03-25', 2.5, "Progress update", 5),
-(3, 0, 1, '2021-04-04', '2021-04-15', 3, "Demo project", 6),
-(4, 1, 0, '2021-04-10', '2021-04-13', 1, "", 6);
+(1, 0, 1, '2021-05-20', '2021-05-25', 2, "Pitching project", 1),
+(2, 0, 1, '2021-05-24', '2021-05-25', 2.5, "Progress update", 5),
+(3, 0, 1, '2021-05-04', '2021-05-15', 3, "Demo project", 6),
+(4, 1, 0, '2021-05-10', '2021-05-13', 1, "", 6);
 
 -- --------------------------------------------------------
 
@@ -128,15 +130,21 @@ CREATE TABLE IF NOT EXISTS `link_meeting` (
 
 INSERT INTO `link_meeting` (`availability_id`, `person_id`, `meeting_id`) VALUES
 (1, 1, 1),
+(1, 5, 1),
+(1, 6, 1),
+(1, 7, 1),
+(1, 8, 1),
 (2, 1, 1),
-(3, 1, 1),
-(1, 2, 1),
-(1, 3, 1),
+(2, 2, 1),
+(2, 3, 1),
 (2, 4, 1),
+(3, 1, 1),
+(5, 1, 1),
+(6, 1, 1),
+(7, 4, 2),
 (4, 4, 2),
-(5, 4, 2),
-(5, 5, 2),
-(5, 6, 2);
+(4, 5, 2),
+(4, 6, 2);
 
 -- --------------------------------------------------------
 
@@ -157,11 +165,13 @@ CREATE TABLE IF NOT EXISTS `availability_info` (
 --
 
 INSERT INTO `availability_info` (`availability_id`, `date`, `start_time`, `end_time`) VALUES
-(1, '2021-04-20', '8:00:00', '10:00:00'),
-(2, '2021-04-20', '7:00:00', '9:00:00'),
-(3, '2021-04-22', '7:00:00', '9:00:00'),
-(4, '2021-03-24', '7:00:00', '9:30:00'),
-(5, '2021-03-24', '7:30:00', '10:00:00');
+(1, '2021-05-20', '8:00:00', '10:00:00'),
+(2, '2021-05-20', '7:00:00', '9:00:00'),
+(3, '2021-05-22', '7:00:00', '9:00:00'),
+(4, '2021-05-24', '7:00:00', '9:30:00'),
+(5, '2021-05-24', '8:00:00', '10:00:00'),
+(6, '2021-05-25', '8:00:00', '10:00:00'),
+(7, '2021-05-25', '7:00:00', '9:30:00');
 
 -- --------------------------------------------------------
 
@@ -184,6 +194,10 @@ INSERT INTO `attendee_info` (`person_id`, `meeting_id`, `meeting_role`) VALUES
 (2, 1, 'Guest Speaker'),
 (3, 1, 'Recorder'),
 (4, 1, 'Presenter'),
+(5, 1, 'Attendee'),
+(6, 1, 'Attendee'),
+(7, 1, 'Attendee'),
+(8, 1, 'Attendee'),
 (5, 2, 'Coordinator'),
 (6, 2, 'Attendee'),
 (4, 2, 'Presenter');
